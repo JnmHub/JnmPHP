@@ -1,0 +1,23 @@
+# Composer dependencies
+/vendor/
+/composer.lock
+# Environment variables
+env
+# Cache and logs
+*.log
+*.cache
+*.tmp
+# IDE-specific files
+.idea
+idea/
+vscode/
+# PHPUnit results
+phpunit.result.cache
+# Node.js dependencies (if applicable)
+node_modules/
+# System files
+DS_Store
+Thumbs.db
+# Backup files
+*.bak
+*.swp
