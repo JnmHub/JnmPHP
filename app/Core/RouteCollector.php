@@ -58,4 +58,19 @@ class RouteCollector
         $name = str_replace('.php', '', basename($file));
         return $ns . $name;
     }
+    public static function run():array
+    {
+        $routeCacheFile = APP_ROOT . '/cache/routes.php';
+        if (DEBUG) { // 或者加上一个开发模式的判断
+            // 这里你需要一个方法来获取所有控制器文件的路径
+            $controllerFiles = glob(APP_ROOT . '/app/Controller/*.php');
+
+            $collector = new RouteCollector();
+            $routes = $collector->collect($controllerFiles);
+
+            // 将路由表写入缓存文件
+            file_put_contents($routeCacheFile, '<?php return ' . var_export($routes, true) . ';');
+        }
+        return require $routeCacheFile;
+    }
 }

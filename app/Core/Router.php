@@ -2,6 +2,7 @@
 namespace App\Core;
 
 use App\Core\Attribute\PathVariable;
+use App\Tools\Str;
 use ReflectionMethod;
 
 class Router
@@ -59,29 +60,6 @@ class Router
                         }
                     }
 
-//                    if (array_key_exists($name, $params)) {
-//                        $value = $params[$name];
-//
-//                        // ✅ 新增：若值为空字符串且无默认值，则视为缺少参数
-//                        if ($value === '' && !$param->isDefaultValueAvailable()) {
-//                            http_response_code(400);
-//                            echo $missingMsg;
-//                            return;
-//                        }
-//
-//                        // 有值（或空字符串但允许）→ 加入参数数组
-//                        $args[] = $value === '' && $param->isDefaultValueAvailable()
-//                            ? $param->getDefaultValue()
-//                            : $value;
-//
-//                    } elseif ($param->isDefaultValueAvailable()) {
-//                        $args[] = $param->getDefaultValue();
-//                    } else {
-//                        http_response_code(400);
-//                        echo $missingMsg;
-//                        return;
-//                    }
-                    // ✅ 获取匹配值（可能为空字符串）
                     $hasKey = array_key_exists($name, $params);
                     $value = $hasKey ? $params[$name] : null;
 
@@ -99,11 +77,11 @@ class Router
                             return;
                         }
                     } else {
-                        // 有正常值
-                        $args[] = urldecode($value);
+                        $args[] = Str::urldecode($value);
                     }
                 }
-                $args = array_map('urldecode', $args);
+
+                $args = empty($args) ? [] : array_map(['App\Tools\Str', 'urldecode'], $args);
                 return $ref->invoke($controller, ...$args);
             }
         }
