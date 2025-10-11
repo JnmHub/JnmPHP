@@ -1,7 +1,9 @@
 <?php
-namespace App\Core;
+namespace App\Core\Routing;
 
 use App\Core\Attribute\PathVariable;
+use App\Core\Http\JsonResponse;
+use App\Core\Http\ResponseInterface;
 use App\Exception\HttpException;
 use App\Tools\Str;
 use ReflectionMethod;

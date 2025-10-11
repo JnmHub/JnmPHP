@@ -1,9 +1,12 @@
 <?php
 
-namespace App\Core;
+namespace App\Exception\handler;
 
+use App\Core\Http\JsonResponse;
 use App\Exception\HttpException;
-use Throwable; // Throwable 是 Error 和 Exception 的父接口
+use Throwable;
+
+// Throwable 是 Error 和 Exception 的父接口
 
 class ExceptionHandler
 {

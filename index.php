@@ -1,9 +1,9 @@
 <?php
 declare(strict_types=1);
 
-use App\Core\DB;
-use App\Core\RouteCollector;
-use App\Core\ExceptionHandler;
+use App\Core\Database\DB;
+use App\Core\Routing\RouteCollector;
+use App\Exception\handler\ExceptionHandler;
 
 include __DIR__ . "/vendor/autoload.php";
 const APP_ROOT = __DIR__;
@@ -15,7 +15,7 @@ $routes = RouteCollector::run();
 DB::init();
 
 // 格式化JSON和初始化请求参数
-\App\Core\Request::formData();
+\App\Core\Http\Request::formData();
 // 路由转发
-$router = new \App\Core\Router($routes);
+$router = new \App\Core\Routing\Router($routes);
 $router->dispatch($_SERVER['REQUEST_URI'], $_SERVER['REQUEST_METHOD']);

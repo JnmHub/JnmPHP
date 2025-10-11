@@ -1,9 +1,7 @@
 <?php
 
-namespace App\Core;
+namespace App\Core\Routing;
 
-use App\Core\Attribute\Get;
-use App\Core\Attribute\Post;
 use App\Core\Attribute\Route;
 use App\Core\Attribute\RoutePrefix;
 use FilesystemIterator;

@@ -6,11 +6,12 @@ use App\Core\Attribute\PathVariable;
 use App\Core\Attribute\Post;
 use App\Core\Attribute\RoutePrefix;
 use App\Model\User;
+
 #[RoutePrefix('/')]
 class IndexController extends BaseController
 {
     #[Get('/index'),Get('/')]
-    public function index($aaa = null): \App\Core\ViewResponse
+    public function index($aaa = null): \App\Core\Http\ViewResponse
     {
         // 查找ID为1的用户
         $user = User::find(1);
