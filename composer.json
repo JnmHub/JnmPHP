@@ -1,0 +1,17 @@
+{
+    "name": "lijinmu/study",
+    "autoload": {
+        "psr-4": {
+            "App\\": "app/"
+        }
+    },
+    "authors": [
+        {
+            "name": "李金木",
+            "email": "122771159@qq.com"
+        }
+    ],
+    "require": {
+        "illuminate/database": "^12.33"
+    }
+}
