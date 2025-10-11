@@ -10,7 +10,7 @@ use App\Model\User;
 class IndexController extends BaseController
 {
     #[Get('/index'),Get('/')]
-    public function index($aaa = null)
+    public function index($aaa = null): \App\Core\ViewResponse
     {
         // 查找ID为1的用户
         $user = User::find(1);
@@ -18,41 +18,37 @@ class IndexController extends BaseController
             'title' => 'User Info'.$aaa,
             'message' => 'Hello, ' . ($user ? $user->name : 'Guest')
         ];
-        $this->view('index/index', $data);
+        return $this->view('index/index', $data);
     }
     #[Get('/info')]
-    public function getInfo($id = null) // 结合参数注入，可以接收 ?id=1 这样的参数
+    public function getInfo($id = null): string // 结合参数注入，可以接收 ?id=1 这样的参数
     {
         // ... 查询用户信息的逻辑
-        echo "Fetching user info for ID: " . ($id ?? 'all');
+        return "Fetching user info for ID: " . ($id ?? 'all');
     }
 
     #[Post('/create')]
-    public function createUser()
+    public function createUser(): string
     {
         $name = JSON['name'];
-        echo "User '{$name}' created!";
+        return "User '{$name}' created!";
     }
 
     #[Get('/user/{uid}/order/{oid}')]
     public function getOrder(
         #[PathVariable('uid', '用户ID不能为空')] string $userId,
         #[PathVariable('oid', '订单ID缺失')] string $orderId
-    ): void {
-        echo "用户ID：{$userId}，订单ID：{$orderId}";
+    ): string {
+        return "用户ID：{$userId}，订单ID：{$orderId}";
     }
 
     #[Get('/user/{id}')]
     public function getUser(
         #[PathVariable('id', '用户ID未提供')] string $id,
         string $extra = '默认信息'
-    ): void {
-        echo "用户：{$id}，额外：{$extra}";
+    ): string {
+        return "用户：{$id}，额外：{$extra}";
     }
 
-    #[Get('/user/{uid}/order/{oid}')]
-    public function showOrder(int $uid, int $oid)
-    {
-        echo "用户ID={$uid}, 订单ID={$oid}";
-    }
+
 }

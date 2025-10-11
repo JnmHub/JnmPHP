@@ -3,14 +3,14 @@ declare(strict_types=1);
 
 use App\Core\DB;
 use App\Core\RouteCollector;
+use App\Core\ExceptionHandler;
 
 include __DIR__ . "/vendor/autoload.php";
 const APP_ROOT = __DIR__;
 const DEBUG = true;
-
+ExceptionHandler::register();
 // 从缓存加载路由表
 $routes = RouteCollector::run();
-
 // 初始化数据库，并连接
 DB::init();
 

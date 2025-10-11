@@ -1,46 +1,106 @@
 <?php
-// 在 app/Core/ 目录下创建 RouteCollector.php
+
 namespace App\Core;
 
+use App\Core\Attribute\Get;
+use App\Core\Attribute\Post;
 use App\Core\Attribute\Route;
 use App\Core\Attribute\RoutePrefix;
+use FilesystemIterator;
 use ReflectionClass;
-use ReflectionMethod;
+use RuntimeException;
 
 class RouteCollector
 {
-    public function collect(array $controllerPaths): array
+    public static function run(): array
+    {
+        // 生产环境下直接从缓存加载
+        if (!DEBUG && file_exists(APP_ROOT . '/cache/routes.php')) {
+            return require APP_ROOT . '/cache/routes.php';
+        }
+
+        $routes = self::collectRoutes();
+
+        // 写入缓存
+        $cacheDir = APP_ROOT . '/cache';
+        if (!is_dir($cacheDir)) {
+            mkdir($cacheDir, 0755, true);
+        }
+        file_put_contents(
+            $cacheDir . '/routes.php',
+            '<?php return ' . var_export($routes, true) . ';'
+        );
+
+        return $routes;
+    }
+
+    private static function collectRoutes(): array
     {
         $routes = [];
+        // ✅ 用于检测重复路由的辅助数组
+        $existingRoutes = [];
 
-        foreach ($controllerPaths as $path) {
-            // 这里需要一个逻辑来从文件路径获取完整的类名
-            // 比如，将 /path/to/app/Controller/UserController.php 转换为 App\Controller\UserController
-            $className = $this->getClassNameFromFile($path);
+        $controllerPath = APP_ROOT . '/app/Controller';
+        $iterator = new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($controllerPath, FilesystemIterator::SKIP_DOTS));
 
-            if (!class_exists($className)) {
+        foreach ($iterator as $file) {
+            if ($file->getExtension() !== 'php') {
                 continue;
             }
 
-            $reflectionClass = new ReflectionClass($className);
-            $classPrefix = '';
-            $classAttributes = $reflectionClass->getAttributes(RoutePrefix::class);
-            if (!empty($classAttributes)) {
-                // 获取注解实例并拿到前缀值
-                $classPrefix = $classAttributes[0]->newInstance()->prefix;
-            }
-            foreach ($reflectionClass->getMethods(ReflectionMethod::IS_PUBLIC) as $method) {
-                $attributes = $method->getAttributes(Route::class, \ReflectionAttribute::IS_INSTANCEOF);
+            $relativePath = str_replace([$controllerPath . '/', '.php'], '', $file->getRealPath());
+            $class = 'App\\Controller\\' . str_replace('/', '\\', $relativePath);
 
-                foreach ($attributes as $attribute) {
-                    /** @var Route $route */
-                    $route = $attribute->newInstance();
-                    $fullPath = rtrim($classPrefix, '/') . '/' . ltrim($route->path, '/');
+            if (!class_exists($class)) {
+                continue;
+            }
+
+            $ref = new ReflectionClass($class);
+            $prefixAttrs = $ref->getAttributes(RoutePrefix::class);
+            $prefix = $prefixAttrs ? $prefixAttrs[0]->newInstance()->prefix : '';
+
+            foreach ($ref->getMethods() as $method) {
+                $routeAttrs = $method->getAttributes(Route::class, \ReflectionAttribute::IS_INSTANCEOF);
+
+                foreach ($routeAttrs as $routeAttr) {
+                    $route = $routeAttr->newInstance();
+                    $fullPath = rtrim($prefix, '/') . '/' . ltrim($route->path, '/');
+                    // ✅ 新增逻辑：检测重复路由
+                    // 将所有请求方法都遍历一遍
+                    foreach ($route->methods as $httpMethod) {
+                        $routeIdentifier = $httpMethod . '@' . $fullPath;
+                        if (isset($existingRoutes[$routeIdentifier])) {
+                            // 如果路由已存在，抛出异常
+                            $existingAction = $existingRoutes[$routeIdentifier];
+                            throw new RuntimeException(
+                                sprintf(
+                                    "路由冲突: [%s %s] 同时被 %s::%s 和 %s::%s 定义。",
+                                    $httpMethod,
+                                    $fullPath,
+                                    $class,
+                                    $method->getName(),
+                                    $existingAction['controller'],
+                                    $existingAction['action']
+                                )
+                            );
+                        }
+                        // 记录该路由定义
+                        $existingRoutes[$routeIdentifier] = [
+                            'controller' => $class,
+                            'action' => $method->getName(),
+                        ];
+                    }
+
+                    // ✅ 新增逻辑：预编译正则表达式并存入 preg_path
+                    $preg_path = preg_replace('#\{(\w+)\}#', '(?P<$1>[^/]*)', $fullPath);
+                    $preg_path = rtrim($preg_path, '/') ?: '/';
+                    $preg_path = '#^' . $preg_path . '$#';
 
                     $routes[] = [
-                        'path' => $fullPath, // <-- 使用拼接后的完整路径
+                        'path' => $fullPath,
+                        'preg_path' => $preg_path, // 新增字段
                         'methods' => $route->methods,
-                        'controller' => $className,
+                        'controller' => $class,
                         'action' => $method->getName(),
                     ];
                 }
@@ -48,29 +108,5 @@ class RouteCollector
         }
 
         return $routes;
-    }
-
-    // 一个辅助方法，需要你根据项目结构具体实现
-    private function getClassNameFromFile(string $file): string
-    {
-        // 简化实现
-        $ns = 'App\\Controller\\';
-        $name = str_replace('.php', '', basename($file));
-        return $ns . $name;
-    }
-    public static function run():array
-    {
-        $routeCacheFile = APP_ROOT . '/cache/routes.php';
-        if (DEBUG) { // 或者加上一个开发模式的判断
-            // 这里你需要一个方法来获取所有控制器文件的路径
-            $controllerFiles = glob(APP_ROOT . '/app/Controller/*.php');
-
-            $collector = new RouteCollector();
-            $routes = $collector->collect($controllerFiles);
-
-            // 将路由表写入缓存文件
-            file_put_contents($routeCacheFile, '<?php return ' . var_export($routes, true) . ';');
-        }
-        return require $routeCacheFile;
     }
 }

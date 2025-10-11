@@ -1,9 +1,9 @@
 <?php return array(
     'root' => array(
         'name' => 'lijinmu/study',
-        'pretty_version' => '1.0.0+no-version-set',
-        'version' => '1.0.0.0',
-        'reference' => null,
+        'pretty_version' => 'dev-main',
+        'version' => 'dev-main',
+        'reference' => '6cf027b18741fb3f5cce8bbca056a85b3c5e9cfa',
         'type' => 'library',
         'install_path' => __DIR__ . '/../../',
         'aliases' => array(),
@@ -110,9 +110,9 @@
             'dev_requirement' => false,
         ),
         'lijinmu/study' => array(
-            'pretty_version' => '1.0.0+no-version-set',
-            'version' => '1.0.0.0',
-            'reference' => null,
+            'pretty_version' => 'dev-main',
+            'version' => 'dev-main',
+            'reference' => '6cf027b18741fb3f5cce8bbca056a85b3c5e9cfa',
             'type' => 'library',
             'install_path' => __DIR__ . '/../../',
             'aliases' => array(),
