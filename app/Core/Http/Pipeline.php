@@ -64,6 +64,10 @@ class Pipeline
      */
     private function carry(): Closure
     {
+        /**
+         * @params mixed|$stack 是初始值，第一次循环为初始值，第二次就为上次执行的值，这是累加器
+         * @params mixed|$pipe  是当前值
+         */
         return function ($stack, $pipe) {
             return function ($passable) use ($stack, $pipe) {
                 // 实例化中间件
