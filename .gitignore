@@ -5,7 +5,7 @@
 env
 # Cache and logs
 *.log
-*.cache
+
 *.tmp
 # IDE-specific files
 .idea

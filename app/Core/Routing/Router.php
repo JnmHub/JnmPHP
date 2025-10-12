@@ -2,6 +2,7 @@
 namespace App\Core\Routing;
 
 use App\Core\Attribute\PathVariable;
+use App\Core\Events\EventManager;
 use App\Core\Http\JsonResponse;
 use App\Core\Http\ResponseInterface;
 use App\Exception\HttpException;
@@ -24,6 +25,7 @@ class Router
     public function dispatch(string $uri, string $method)
     {
         // 清理 URI 中多余的 ?参数 和 尾部 /
+        EventManager::getInstance()->dispatch('router.before_dispatch', $uri, $method);
         $uri = preg_replace('~/+~', '/', $uri);
         $uri = parse_url($uri, PHP_URL_PATH);
         $uri = rtrim($uri, '/') ?: '/';
@@ -77,6 +79,7 @@ class Router
                 }
 
                 $args = empty($args) ? [] : array_map(['App\Tools\Str', 'urldecode'], $args);
+                EventManager::getInstance()->dispatch('controller.before_execute', $controller, $action, $args);
 
                 $response = $ref->invoke($controller, ...$args);
 
@@ -89,6 +92,7 @@ class Router
                     // 2. 否则，默认其为API数据，自动用 JsonResponse::success 包装
                     JsonResponse::success($response)->send();
                 }
+                EventManager::getInstance()->dispatch('controller.after_execute', $response);
 
                 return; // 请求处理完毕，终止执行
             }
