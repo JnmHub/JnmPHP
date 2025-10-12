@@ -2,14 +2,17 @@
 
 namespace App\Core\Routing;
 
+use App\Core\Attribute\Middleware;
 use App\Core\Attribute\Route;
 use App\Core\Attribute\RoutePrefix;
+use App\Http\Kernel;
 use FilesystemIterator;
 use ReflectionClass;
 use RuntimeException;
 
 class RouteCollector
 {
+    private static ?Kernel $kernel = null; // ✅ 用于缓存 Kernel 实例
     public static function run(): array
     {
         // 生产环境下直接从缓存加载
@@ -31,7 +34,13 @@ class RouteCollector
 
         return $routes;
     }
-
+    private static function getKernel(): Kernel
+    {
+        if (self::$kernel === null) {
+            self::$kernel = new Kernel();
+        }
+        return self::$kernel;
+    }
     private static function collectRoutes(): array
     {
         $routes = [];
@@ -56,9 +65,19 @@ class RouteCollector
             $ref = new ReflectionClass($class);
             $prefixAttrs = $ref->getAttributes(RoutePrefix::class);
             $prefix = $prefixAttrs ? $prefixAttrs[0]->newInstance()->prefix : '';
-
+            // ✅ 1. 获取类级别中间件
+            $classMiddlewareAttrs = $ref->getAttributes(Middleware::class);
+            $classMiddlewares = self::parseMiddlewareAttributes($classMiddlewareAttrs);
             foreach ($ref->getMethods() as $method) {
                 $routeAttrs = $method->getAttributes(Route::class, \ReflectionAttribute::IS_INSTANCEOF);
+                if (empty($routeAttrs)) continue;
+                // ✅ 2. 获取方法级别中间件
+                $methodMiddlewareAttrs = $method->getAttributes(Middleware::class);
+                $methodMiddlewares = self::parseMiddlewareAttributes($methodMiddlewareAttrs);
+
+                // ✅ 3. 合并类和方法的中间件
+                $allMiddlewares = array_values(array_unique(array_merge($classMiddlewares, $methodMiddlewares)));
+
 
                 foreach ($routeAttrs as $routeAttr) {
                     $route = $routeAttr->newInstance();
@@ -100,11 +119,30 @@ class RouteCollector
                         'methods' => $route->methods,
                         'controller' => $class,
                         'action' => $method->getName(),
+                        'middlewares' => $allMiddlewares
                     ];
                 }
             }
         }
 
         return $routes;
+    }
+
+    /**
+     * ✅ 新增：解析中间件注解，支持别名
+     */
+    private static function parseMiddlewareAttributes(array $attributes): array
+    {
+        $middlewares = [];
+        $aliases = self::getKernel()->getRouteMiddlewareAliases();
+
+        foreach ($attributes as $attribute) {
+            $instance = $attribute->newInstance();
+            foreach ($instance->middlewares as $middleware) {
+                // 如果是别名，则替换为完整的类名
+                $middlewares[] = $aliases[$middleware] ?? $middleware;
+            }
+        }
+        return $middlewares;
     }
 }

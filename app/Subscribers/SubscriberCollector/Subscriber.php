@@ -3,6 +3,7 @@
 
 namespace App\Subscribers\SubscriberCollector;
 
+
 use App\Core\Events\AbstractSubscriber;
 use App\Core\Events\SubscriberCollector;
 

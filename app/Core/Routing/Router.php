@@ -4,25 +4,29 @@ namespace App\Core\Routing;
 use App\Core\Attribute\PathVariable;
 use App\Core\Events\EventManager;
 use App\Core\Http\JsonResponse;
+use App\Core\Http\Pipeline;
 use App\Core\Http\ResponseInterface;
 use App\Exception\HttpException;
+use App\Http\Kernel;
 use App\Tools\Str;
 use ReflectionMethod;
 
 class Router
 {
     private array $routes;
+    private Kernel $kernel;
 
     public function __construct(array $routes)
     {
         $this->routes = $routes;
+        $this->kernel = new Kernel(); // ✅ 实例化 Kernel
     }
 
     /**
      * @throws \ReflectionException
      * @throws HttpException
      */
-    public function dispatch(string $uri, string $method)
+    public function dispatch(string $uri, string $method, $request)
     {
         // 清理 URI 中多余的 ?参数 和 尾部 /
         EventManager::getInstance()->dispatch('router.before_dispatch', $uri, $method);
@@ -81,15 +85,25 @@ class Router
                 $args = empty($args) ? [] : array_map(['App\Tools\Str', 'urldecode'], $args);
                 EventManager::getInstance()->dispatch('controller.before_execute', $controller, $action, $args);
 
-                $response = $ref->invoke($controller, ...$args);
+                // ✅ 1. 定义管道的最终目的地：执行控制器
+                $controllerExecution = function () use ($ref, $controller, $args) {
+                    return $ref->invoke($controller, ...$args);
+                };
+
+                // ✅ 2. 组合所有需要执行的中间件
+                $middlewares = array_merge(
+                    $this->kernel->getGlobalMiddleware(), // 全局中间件
+                    $route['middlewares'] // 注解中定义的路由中间件
+                );
+
+                $response = Pipeline::init()->send($request) // 实际项目中应传入 Request 对象
+                    ->through(array_unique($middlewares))
+                    ->then($controllerExecution);
 
                 // ✅ 核心改动：智能响应处理器
                 if ($response instanceof ResponseInterface) {
-                    // 1. 如果控制器返回的是一个响应对象 (JsonResponse 或 ViewResponse)
-                    //    直接调用它的 send 方法
                     $response->send();
                 } else {
-                    // 2. 否则，默认其为API数据，自动用 JsonResponse::success 包装
                     JsonResponse::success($response)->send();
                 }
                 EventManager::getInstance()->dispatch('controller.after_execute', $response);

@@ -9,6 +9,10 @@
     ),
     'controller' => 'App\\Controller\\IndexController',
     'action' => 'index',
+    'middlewares' => 
+    array (
+      0 => 'App\\Http\\Middleware\\LogRequestMiddleware',
+    ),
   ),
   1 => 
   array (
@@ -20,17 +24,24 @@
     ),
     'controller' => 'App\\Controller\\IndexController',
     'action' => 'index',
+    'middlewares' => 
+    array (
+      0 => 'App\\Http\\Middleware\\LogRequestMiddleware',
+    ),
   ),
   2 => 
   array (
-    'path' => '/info',
-    'preg_path' => '#^/info$#',
+    'path' => '/info/{aid}',
+    'preg_path' => '#^/info/(?P<aid>[^/]*)$#',
     'methods' => 
     array (
       0 => 'GET',
     ),
     'controller' => 'App\\Controller\\IndexController',
     'action' => 'getInfo',
+    'middlewares' => 
+    array (
+    ),
   ),
   3 => 
   array (
@@ -42,6 +53,9 @@
     ),
     'controller' => 'App\\Controller\\IndexController',
     'action' => 'createUser',
+    'middlewares' => 
+    array (
+    ),
   ),
   4 => 
   array (
@@ -53,6 +67,9 @@
     ),
     'controller' => 'App\\Controller\\IndexController',
     'action' => 'getOrder',
+    'middlewares' => 
+    array (
+    ),
   ),
   5 => 
   array (
@@ -64,5 +81,8 @@
     ),
     'controller' => 'App\\Controller\\IndexController',
     'action' => 'getUser',
+    'middlewares' => 
+    array (
+    ),
   ),
 );

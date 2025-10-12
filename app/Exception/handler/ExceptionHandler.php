@@ -45,11 +45,11 @@ class ExceptionHandler
             foreach ($e->headers as $name => $value) {
                 header($name . ': ' . $value);
             }
-            self::renderJsonError($e,$e->statusCode);
+            self::renderDevError($e,$e->statusCode);
             return;
         }
         http_response_code(500);
-        self::renderJsonError($e,500);
+        self::renderDevError($e,500);
     }
 
     /**
@@ -57,7 +57,7 @@ class ExceptionHandler
      * 渲染开发环境下的错误页面
      * @param Throwable $e
      */
-    private static function renderDevError(Throwable $e): void
+    private static function renderDevError(Throwable $e,int $code): void
     {
         echo '<!DOCTYPE html>';
         echo '<html lang="en">';

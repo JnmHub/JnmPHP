@@ -2,6 +2,7 @@
 
 namespace App\Subscribers\Demo;
 
+
 use App\Core\Events\AbstractSubscriber;
 
 class Subscriber extends AbstractSubscriber
