@@ -2,8 +2,8 @@
 
 namespace App\Exception\handler;
 
-use App\Core\Http\JsonResponse;
 use App\Exception\HttpException;
+use App\Http\Response\JsonResponse;
 use Throwable;
 
 // Throwable 是 Error 和 Exception 的父接口

@@ -2,9 +2,9 @@
 
 namespace App\Controller;
 
-use App\Core\Http\FileResponse;
-use App\Core\Http\ViewResponse;
 use App\Exception\HttpException;
+use App\Http\Response\FileResponse;
+use App\Http\Response\ViewResponse;
 
 class BaseController
 {

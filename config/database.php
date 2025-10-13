@@ -2,7 +2,7 @@
 return [
     'driver'    => 'mysql',
     'host'      => '127.0.0.1',
-    'database'  => 'db_study',
+    'database'  => 'aaa',
     'username'  => 'root',
     'password'  => 'root',
     'charset'   => 'utf8mb4',

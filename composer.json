@@ -2,7 +2,8 @@
     "name": "lijinmu/study",
     "autoload": {
         "psr-4": {
-            "App\\": "app/"
+            "App\\": "app/",
+            "Kernel\\": "kernel/"
         }
     },
     "authors": [

@@ -3,7 +3,7 @@
 namespace App\Subscribers\Demo;
 
 
-use App\Core\Events\AbstractSubscriber;
+use App\Subscribers\AbstractSubscriber;
 
 class Subscriber extends AbstractSubscriber
 {

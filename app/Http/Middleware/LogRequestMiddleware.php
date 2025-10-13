@@ -2,7 +2,7 @@
 
 namespace App\Http\Middleware;
 
-use App\Core\Http\MiddlewareInterface;
+use App\Http\MiddlewareInterface;
 use Closure;
 
 class LogRequestMiddleware implements MiddlewareInterface

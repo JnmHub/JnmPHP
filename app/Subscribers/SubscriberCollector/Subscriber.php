@@ -4,8 +4,8 @@
 namespace App\Subscribers\SubscriberCollector;
 
 
-use App\Core\Events\AbstractSubscriber;
-use App\Core\Events\SubscriberCollector;
+use App\Subscribers\AbstractSubscriber;
+use App\Subscribers\SubscriberCollector;
 
 class Subscriber extends AbstractSubscriber
 {

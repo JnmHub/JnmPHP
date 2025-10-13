@@ -1,13 +1,13 @@
 <?php
 namespace App\Controller;
 
-use App\Core\Attribute\Get;
-use App\Core\Attribute\Middleware;
-use App\Core\Attribute\PathVariable;
-use App\Core\Attribute\Post;
-use App\Core\Attribute\RoutePrefix;
-use App\Core\Http\ViewResponse;
-use App\Model\User;
+use App\Attribute\Get;
+use App\Attribute\Middleware;
+use App\Attribute\PathVariable;
+use App\Attribute\Post;
+use App\Attribute\RoutePrefix;
+use App\Http\Response\ViewResponse;
+use App\Models\User;
 
 #[RoutePrefix('/')]
 class IndexController extends BaseController

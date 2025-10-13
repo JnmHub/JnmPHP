@@ -2,8 +2,8 @@
 
 namespace App\Http\Middleware;
 
-use App\Core\Http\MiddlewareInterface;
 use App\Exception\HttpException;
+use App\Http\MiddlewareInterface;
 use Closure;
 
 class AuthMiddleware implements MiddlewareInterface

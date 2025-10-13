@@ -1,11 +1,11 @@
 <?php
 declare(strict_types=1);
 
-use App\Core\Events\EventManager;
-use App\Core\Events\SubscriberCollector;
-use App\Core\Database\DB;
-use App\Core\Routing\RouteCollector;
+use App\Database\DB;
+use App\Events\EventManager;
 use App\Exception\handler\ExceptionHandler;
+use App\Routing\RouteCollector;
+use App\Subscribers\SubscriberCollector;
 
 include __DIR__ . "/vendor/autoload.php";
 const APP_ROOT = __DIR__;
@@ -31,9 +31,9 @@ $routes = RouteCollector::run();
 DB::init();
 
 // 格式化JSON和初始化请求参数
-$request = \App\Core\Http\Request::capture();
+$request = \App\Http\Request\Request::capture();
 // 路由转发
-$router = new \App\Core\Routing\Router($routes);
+$router = new \App\Routing\Router($routes);
 $router->dispatch($_SERVER['REQUEST_URI'], $_SERVER['REQUEST_METHOD'],$request);
 // 钩子 : 应用结束前
 $eventManager->dispatch('app.shutdown');

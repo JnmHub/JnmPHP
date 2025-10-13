@@ -3,9 +3,7 @@
 
 namespace App\Subscribers\DatabaseLogger;
 
-use App\Core\Events\AbstractSubscriber;
-use Illuminate\Database\Capsule\Manager as DB;
-use Illuminate\Database\Events\QueryExecuted;
+use App\Subscribers\AbstractSubscriber;
 
 class Subscriber extends AbstractSubscriber
 {
