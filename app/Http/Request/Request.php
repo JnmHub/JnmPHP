@@ -80,7 +80,7 @@ class Request
             $headers = getallheaders();
             // getallheaders() 在没有请求头时可能返回 false
             if ($headers !== false) {
-                return $headers;
+                return array_change_key_case($headers);
             }
         }
 
@@ -92,7 +92,7 @@ class Request
                 $headers[$headerName] = $value;
             }
         }
-        return $headers;
+        return array_change_key_case($headers);
     }
 
     /**
