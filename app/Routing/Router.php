@@ -2,6 +2,7 @@
 namespace App\Routing;
 
 use App\Attribute\PathVariable;
+use App\Attribute\RequestBody;
 use App\Events\EventManager;
 use App\Exception\HttpException;
 use App\Helpers\Str;
@@ -10,6 +11,7 @@ use App\Http\Pipeline;
 use App\Http\Request\Request;
 use App\Http\Response\JsonResponse;
 use App\Http\Response\ResponseInterface;
+use Illuminate\Database\Eloquent\Model;
 use Kernel\Container\Container;
 use ReflectionMethod;
 
@@ -27,6 +29,7 @@ class Router
     /**
      * @throws \ReflectionException
      * @throws HttpException
+     * @throws \Exception
      */
     public function dispatch(string $uri, string $method, $request)
     {
@@ -59,6 +62,32 @@ class Router
                 foreach ($ref->getParameters() as $param) {
                     $paramType = $param->getType();
                     $paramName = $param->getName();
+                    // 处理RequestBody
+                    $requestBodyAttrs = $param->getAttributes(RequestBody::class);
+                    if ($requestBodyAttrs) {
+                        if (!$paramType || $paramType->isBuiltin()) {
+                            throw new \Exception("RequestBody a参数 {$param->getName()} 必须是一个类。");
+                        }
+                        $className = $paramType->getName();
+                        $classInstance = new $className();
+                        // 从 Request 对象中获取 JSON 数据
+                        $jsonData = $request->json();
+                        // 核心：将 JSON 数据填充到对象实例中
+                        if ($classInstance instanceof Model) {
+                            // 如果是 Model，使用 fill 方法，这会自动应用 $fillable 白名单
+                            $classInstance->fill($jsonData);
+                        } else {
+                            // 如果是普通 DTO，使用原来的逻辑
+                            foreach ($jsonData as $key => $value) {
+                                if (property_exists($classInstance, $key)) {
+                                    $classInstance->{$key} = $value;
+                                }
+                            }
+                        }
+                        $args[$param->getName()] = $classInstance;
+                        continue; // 处理完毕，跳过该参数的后续 PathVariable 逻辑
+                    }
+
                     if ($paramType && !$paramType->isBuiltin() && $paramType->getName() === Request::class) {
                         $args[$paramName] = Request::capture();
                         continue; // 继续处理下一个参数

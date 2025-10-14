@@ -45,14 +45,14 @@
   ),
   3 => 
   array (
-    'path' => '/create',
-    'preg_path' => '#^/create$#',
+    'path' => '/department',
+    'preg_path' => '#^/department$#',
     'methods' => 
     array (
       0 => 'POST',
     ),
     'controller' => 'App\\Controller\\IndexController',
-    'action' => 'createUser',
+    'action' => 'createDepartment',
     'middlewares' => 
     array (
     ),
@@ -81,6 +81,20 @@
     ),
     'controller' => 'App\\Controller\\IndexController',
     'action' => 'getUser',
+    'middlewares' => 
+    array (
+    ),
+  ),
+  6 => 
+  array (
+    'path' => '/users',
+    'preg_path' => '#^/users$#',
+    'methods' => 
+    array (
+      0 => 'POST',
+    ),
+    'controller' => 'App\\Controller\\IndexController',
+    'action' => 'createUser',
     'middlewares' => 
     array (
     ),
