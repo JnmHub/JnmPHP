@@ -7,8 +7,6 @@ use App\Subscribers\AbstractSubscriber;
 
 class Subscriber extends AbstractSubscriber
 {
-    private const SLOW_QUERY_THRESHOLD = 100;
-
     public function subscribe(): void
     {
         $this->events()->on('router.before_dispatch', function() {
