@@ -17,19 +17,20 @@ class IndexController extends BaseController
 {
     #[Get('/index'),Get('/')]
     #[Middleware("log")]
-    public function index($aaa = null): User
+    public function index($aaa = null)
     {
         // 查找ID为1的用户
         $user = User::find(1);
-        return $user;
+        $user->name = "asd";
+        $user->password = 'secret';
+        return $user->toArray();
     }
     #[Get('/info/{aid}')]
     public function getInfo(#[PathVariable('aid')]int $id,Request $rrr): string
     {
-        // ... 查询用户信息的逻辑
-        var_dump($rrr);
         return "Fetching user info for ID: " . ($id ?? 'all');
     }
+
     /**
      * @param Department $department
      * @return Department

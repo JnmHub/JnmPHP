@@ -2,17 +2,22 @@
 
 namespace App\Models;
 
+use App\Attribute\Accessor;
 use App\Attribute\BelongsTo;
 use App\Attribute\BelongsToMany;
 use App\Attribute\HasMany;
 use App\Attribute\HasOne;
+use App\Attribute\Mutator;
 use App\Attribute\TableField;
 use DateTimeInterface;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Str;
 use ReflectionClass;
 use BadMethodCallException;
+use ReflectionMethod;
+
 abstract class BaseModel extends Model
 {
     /**
@@ -31,7 +36,8 @@ abstract class BaseModel extends Model
     {
         // 1. 检查方法名是 getter 还是 setter
         $prefix = substr($method, 0, 3);
-        if ($prefix !== 'get' && $prefix !== 'set') {
+        $is_attribute = str_ends_with($method, 'Attribute');
+        if ($prefix !== 'get' && $prefix !== 'set' ||  $is_attribute) {
             // 如果不是 get/set 开头，则调用父类的 __call 方法，保持 Eloquent 原有功能
             return parent::__call($method, $arguments);
         }
@@ -43,7 +49,7 @@ abstract class BaseModel extends Model
         $metadata = $this->getMetadata();
         if (!array_key_exists($propertyName, $metadata['mappings'])) {
             throw new BadMethodCallException(sprintf(
-                'Call to undefined method %s::%s()', static::class, $method
+                '执行未定义的方法 %s::%s()', static::class, $method
             ));
         }
 
@@ -60,7 +66,7 @@ abstract class BaseModel extends Model
             // Setter: 例如 $user->setUserName("Gemini")
             if (count($arguments) !== 1) {
                 throw new \ArgumentCountError(sprintf(
-                    'Method %s::%s() expects exactly one argument, %d given', static::class, $method, count($arguments)
+                    'Function 方法 %s::%s() 期待一个参数, %d 传进来', static::class, $method, count($arguments)
                 ));
             }
             $this->setAttribute($columnName, $arguments[0]);
@@ -86,20 +92,28 @@ abstract class BaseModel extends Model
         $metadata = [
             'primaryKey' => 'id',
             'fillable' => [], // 可填入
-            'mappings' => [], // ✅ 新增：用于存储 [属性名 => 列名] 的映射
-            'relations' => [] // 关联关系元数据
+            'mappings' => [], // ✅ 新增：用于存储 [属性名 => 列名] 的映射[ 'propertyName' => 'columnName' ]
+            'reverseMappings' => [], // ✅ 新增：[ 'columnName' => 'propertyName' ]
+            'relations' => [], // 关联关系元数据
+            'casts' => [],
+            'accessors' => [], // ✅ 新增：用于存储访问器
+            'mutators' => [],  // ✅ 新增：用于存储修改器
         ];
 
         foreach ($properties as $property) {
             $attributes = $property->getAttributes(TableField::class);
             $propertyName = $property->getName();
+
             if (!empty($attributes)) {
                 $field = $attributes[0]->newInstance();
 
                 // 如果注解中未指定列名，则默认列名等于属性名
                 $columnName = $field->columnName ?? $propertyName;
+                // 存储正向和反向映射
                 // 存储映射关系
                 $metadata['mappings'][$propertyName] = $columnName;
+                $metadata['reverseMappings'][$columnName] = $propertyName;
+
                 if ($field->isPrimaryKey) {
                     // 主键的属性名
                     $metadata['primaryKey'] = $propertyName;
@@ -107,6 +121,10 @@ abstract class BaseModel extends Model
                 if ($field->isFillable) {
                     // 可填充的属性名
                     $metadata['fillable'][] = $propertyName;
+                }
+                if ($field->cast) {
+                    // key 应该是数据库的“列名”, 而不是属性名
+                    $metadata['casts'][$columnName] = $field->cast;
                 }
                 continue;
             }
@@ -136,7 +154,29 @@ abstract class BaseModel extends Model
                 $metadata['relations'][$propertyName] = ['type' => 'HasOne', 'config' => $relation];
             }
         }
+        $methods = $reflector->getMethods();
+        foreach ($methods as $method) {
+            $methodName = $method->getName();
+            // 解析访问器
+            if (!empty($method->getAttributes(Accessor::class))) {
+                // 约定：方法名格式为 getXxxAttribute, 对应属性为 xxx
+                // 例如：getUserNameAttribute -> userName
+                if (str_ends_with($methodName, 'Attribute') && str_starts_with($methodName, 'get')) {
+                    $propertyName = lcfirst(substr($methodName, 3, -9));
+                    $metadata['accessors'][$propertyName] = $methodName;
+                }
+            }
 
+            // 解析修改器
+            if (!empty($method->getAttributes(Mutator::class))) {
+                // 约定：方法名格式为 setXxxAttribute, 对应属性为 xxx
+                // 例如：setPasswordAttribute -> password
+                if (str_ends_with($methodName, 'Attribute') && str_starts_with($methodName, 'set')) {
+                    $propertyName = lcfirst(substr($methodName, 3, -9));
+                    $metadata['mutators'][$propertyName] = $methodName;
+                }
+            }
+        }
         return self::$classMetadataCache[$class] = $metadata;
     }
     /**
@@ -188,31 +228,32 @@ abstract class BaseModel extends Model
         return parent::__get($key);
     }
     /**
-     * ✅ 核心改动：重写 toArray 方法，实现属性名到列名的转换
+     * ✅ 核心修正：完全信任 parent::toArray() 的值，只做键名映射
      *
      * @return array
      */
     public function toArray(): array
     {
-        // 1. 先获取 Eloquent 默认的、以“列名”为键的数组
+        // 1. 获取值已经完全处理好的、以“列名”为键的数组。
+        //    (访问器、类型转换、日期格式化在这一步已经全部完成)
         $attributes = parent::toArray();
-        if(!($attributes)) {
+        if (!$attributes) {
             return [];
         }
+
         $newArray = [];
+        $reverseMappings = $this->getMetadata()['reverseMappings'];
 
-        // 2. 获取我们定义的 [属性名 => 列名] 映射
-        $mappings = $this->getMetadata()['mappings'];
-
-        // 3. 创建一个反向映射 [列名 => 属性名] 以便快速查找
-        $reverseMappings = array_flip($mappings);
-
-        // 4. 遍历原始属性数组
+        // 2. 遍历这个完美的数组，我们只做一件事：替换键名。
         foreach ($attributes as $columnName => $value) {
-            // 如果这个列名在我们的反向映射中，就使用我们定义的属性名作为新键
-            // 否则，保持原样 (例如 created_at, updated_at 等)
+            // 这里不再调用 getAttribute，直接使用 $value
             $propertyName = $reverseMappings[$columnName] ?? $columnName;
             $newArray[$propertyName] = $value;
+        }
+
+        // 3. 附加关联关系 (保持不变)
+        foreach ($this->getRelations() as $relationName => $relationValue) {
+            $newArray[$relationName] = $relationValue->toArray();
         }
 
         return $newArray;
@@ -257,6 +298,89 @@ abstract class BaseModel extends Model
         return $this;
     }
 
+
+    /**
+     * ✅ 核心修正：重写 getAttribute 方法，正确地查找并调用访问器
+     */
+    public function getAttribute($key)
+    {
+        $metadata = $this->getMetadata();
+
+        // 1. 根据传入的 key (通常是列名), 找到对应的 PHP 属性名
+        //    例如：传入 'name', 找到 'userName'
+        $propertyName = $metadata['reverseMappings'][$key] ?? $key;
+
+        // 2. 使用属性名去 accessors 缓存中查找是否存在访问器方法
+        if (array_key_exists($propertyName, $metadata['accessors'])) {
+
+            // 3. 获取该属性的原始值
+            //    我们直接调用父类的 getAttribute，因为它能正确处理所有情况
+            $rawValue = parent::getAttribute($key);
+
+            // 4. 调用我们找到的访问器方法，并将原始值作为参数传入
+            return $this->{$metadata['accessors'][$propertyName]}($rawValue);
+        }
+
+        // 5. 如果没有找到我们自定义的访问器，则完全交由 Eloquent 的默认流程处理
+        //    (这会自动处理类型转换 casts 等)
+        return parent::getAttribute($key);
+    }
+
+
+    /**
+     * ✅ 核心修正：重写 setAttribute 方法，以支持有返回值的修改器
+     */
+    public function setAttribute($key, $value)
+    {
+        $metadata = $this->getMetadata();
+        $propertyName = $key;
+        $columnName = $key;
+        foreach ($metadata['reverseMappings'] as $column => $property) {
+            if($column === $key) {
+                $propertyName = $property;
+                $columnName = $column;
+            }
+        }
+        // 检查是否存在我们定义的修改器
+        if (array_key_exists($propertyName, $metadata['mutators'])) {
+            $mutatorMethodName = $metadata['mutators'][$propertyName];
+
+            // 1. 调用修改器方法，并捕获其返回值
+            $returnedValue = $this->{$mutatorMethodName}($value);
+
+            // 2. 使用反射检查修改器方法的返回类型
+            $reflector = new ReflectionMethod($this, $mutatorMethodName);
+            $returnType = $reflector->getReturnType();
+
+            // 3. 判断：如果方法有返回值 (即返回类型不是 'void')
+            if ($returnType && $returnType->getName() !== 'void') {
+                // 就将“返回值”赋给对应的属性
+                // 我们直接调用父类的 setAttribute 来设置，以避免无限循环
+//                return parent::setAttribute($key, $returnedValue);
+                $this->attributes[$columnName] = $returnedValue;
+            }
+
+            // 4. 如果方法的返回类型是 'void'，则我们假设它在内部自己处理了赋值
+            //    (这兼容了我们之前的实现)
+            return $this;
+        }
+
+        // 如果没有找到自定义的修改器，则走 Eloquent 的默认流程
+        return parent::setAttribute($key, $value);
+    }
+
+
+    /**
+     * ✅ 核心改动：重写 getCasts 方法
+     * 将我们从注解中收集的类型转换规则提供给 Eloquent。
+     *
+     * @return array
+     */
+    public function getCasts(): array
+    {
+        // 合并 Eloquent 默认的 casts 和我们从注解中解析的 casts
+        return array_merge(parent::getCasts(), $this->getMetadata()['casts']);
+    }
     /**
      * 为数组/JSON序列化准备日期。
      *
