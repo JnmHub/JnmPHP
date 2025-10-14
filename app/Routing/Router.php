@@ -10,6 +10,7 @@ use App\Http\Pipeline;
 use App\Http\Request\Request;
 use App\Http\Response\JsonResponse;
 use App\Http\Response\ResponseInterface;
+use Kernel\Container\Container;
 use ReflectionMethod;
 
 class Router
@@ -41,11 +42,14 @@ class Router
                 continue;
             }
             $pattern = $route['preg_path'];
+
+
             if (preg_match($pattern, $uri, $matches)) {
                 // 提取命名捕获组
                 $params = array_filter($matches, fn($k) => !is_numeric($k), ARRAY_FILTER_USE_KEY);  // 获取所有的请求的参数
-
-                $controller = new $route['controller']();
+                $params = array_map(['App\Helpers\Str', 'urldecode'], $params);
+                $container = Container::getInstance();
+                $controller = $container->make($route['controller']);
                 $action = $route['action'];
 
                 $ref = new ReflectionMethod($controller, $action);
@@ -54,12 +58,13 @@ class Router
 
                 foreach ($ref->getParameters() as $param) {
                     $paramType = $param->getType();
+                    $paramName = $param->getName();
                     if ($paramType && !$paramType->isBuiltin() && $paramType->getName() === Request::class) {
-                        $args[] = Request::capture();
+                        $args[$paramName] = Request::capture();
                         continue; // 继续处理下一个参数
                     }
                     $attrs = $param->getAttributes(PathVariable::class); // 获取是否有注解
-                    $name = $param->getName(); // 获取参数的名，不是注解的名
+                    $name = $paramName; // 获取参数的名，不是注解的名
                     $missingMsg = "缺少参数：{$name}"; // 默认缺少提示
 
                     if ($attrs) {  // 如果有注解
@@ -79,13 +84,12 @@ class Router
                     if ($isMissing) {
                         if ($param->isDefaultValueAvailable()) {
                             // 有默认值则使用默认值
-                            $args[] = $param->getDefaultValue();
+                            $args[$paramName] = $param->getDefaultValue();
                         } else {
                             throw new HttpException(400, $missingMsg);
                         }
                     } else {
-                        $valueToInject = Str::urldecode($value);
-                        $paramType = $param->getType();
+                        $valueToInject = $value;
                         if ($paramType && $paramType->isBuiltin()) {
                             switch ($paramType->getName()) {
                                 case 'int':
@@ -99,16 +103,16 @@ class Router
                                     break;
                             }
                         }
-                        $args[] = $valueToInject;
+                        $args[$paramName] = $valueToInject;
                     }
                 }
 
-                $args = empty($args) ? [] : array_map(['App\Helpers\Str', 'urldecode'], $args);
                 EventManager::getInstance()->dispatch('controller.before_execute', $controller, $action, $args);
 
                 // ✅ 1. 定义管道的最终目的地：执行控制器
-                $controllerExecution = function () use ($ref, $controller, $args) {
-                    return $ref->invoke($controller, ...$args);
+                $controllerExecution = function () use ($container, $controller, $action, $args) {
+                    // 现在，$methodParams 的键名已经和方法参数名完全对应了
+                    return $container->call([$controller, $action], $args);
                 };
 
                 // ✅ 2. 组合所有需要执行的中间件

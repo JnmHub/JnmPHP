@@ -6,6 +6,7 @@ use App\Events\EventManager;
 use App\Exception\handler\ExceptionHandler;
 use App\Routing\RouteCollector;
 use App\Subscribers\SubscriberCollector;
+use Kernel\Container\Container;
 
 include __DIR__ . "/vendor/autoload.php";
 const APP_ROOT = __DIR__;
@@ -24,6 +25,7 @@ foreach ($subscriberClasses as $class) {
 }
 // 钩子 : 应用初始化后
 $eventManager->dispatch('app.boot');
+Container::init();
 ExceptionHandler::register();
 // 从缓存加载路由表
 $routes = RouteCollector::run();
