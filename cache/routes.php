@@ -127,4 +127,18 @@
     array (
     ),
   ),
+  9 => 
+  array (
+    'path' => '/posts/{id}/tags',
+    'preg_path' => '#^/posts/(?P<id>[^/]*)/tags$#',
+    'methods' => 
+    array (
+      0 => 'GET',
+    ),
+    'controller' => 'App\\Controller\\IndexController',
+    'action' => 'getPostWithTags',
+    'middlewares' => 
+    array (
+    ),
+  ),
 );

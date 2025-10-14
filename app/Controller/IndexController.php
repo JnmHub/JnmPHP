@@ -21,7 +21,6 @@ class IndexController extends BaseController
     {
         // 查找ID为1的用户
         $user = User::find(1);
-        $user->setUserName("asd");
         return $user;
     }
     #[Get('/info/{aid}')]
@@ -107,13 +106,28 @@ class IndexController extends BaseController
         if (!$post) {
             return ['error' => 'Post not found'];
         }
-
-        // 触发 BelongsTo 关联加载
         $user = $post->user;
+        return [
+            'post' => $post,
+            'user_from_relation' => $user
+        ];
+    }
+
+
+    #[Get('/posts/{id}/tags')]
+    public function getPostWithTags(int $id)
+    {
+        $post = \App\Models\Post::getById($id);
+        if (!$post) {
+            return ['error' => 'Post not found'];
+        }
+
+        // ✅ 触发 BelongsToMany 关联加载
+        $tags = $post->tags;
 
         return [
             'post' => $post->toArray(),
-            'user_from_relation' => $user->toArray()
+            'tags' => $tags->toArray()
         ];
     }
 }

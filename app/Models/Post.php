@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Attribute\BelongsTo;
+use App\Attribute\BelongsToMany;
 use App\Attribute\TableField;
 
 /**
@@ -32,4 +33,7 @@ class Post extends BaseModel
      */
     #[BelongsTo(related: User::class, foreignKey: 'user_id')]
     protected User $user;
+
+    #[BelongsToMany(related: Tag::class, table: 'post_tag', foreignPivotKey: 'post_id', relatedPivotKey: 'tag_id')]
+    protected array $tags;
 }

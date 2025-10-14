@@ -3,9 +3,11 @@
 namespace App\Models;
 
 use App\Attribute\BelongsTo;
+use App\Attribute\BelongsToMany;
 use App\Attribute\HasMany;
 use App\Attribute\HasOne;
 use App\Attribute\TableField;
+use DateTimeInterface;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
@@ -122,6 +124,12 @@ abstract class BaseModel extends Model
                 $metadata['relations'][$propertyName] = ['type' => 'BelongsTo', 'config' => $relation];
                 continue;
             }
+            $relationAttributes = $property->getAttributes(BelongsToMany::class);
+            if (!empty($relationAttributes)) {
+                $relation = $relationAttributes[0]->newInstance();
+                $metadata['relations'][$propertyName] = ['type' => 'BelongsToMany', 'config' => $relation];
+                continue;
+            }
             $relationAttributes = $property->getAttributes(HasOne::class);
             if (!empty($relationAttributes)) {
                 $relation = $relationAttributes[0]->newInstance();
@@ -152,6 +160,14 @@ abstract class BaseModel extends Model
             $config = $relationMeta['config'];
 
             switch ($relationMeta['type']) {
+                case 'BelongsToMany':
+                    $relationQuery = $this->belongsToMany(
+                        $config->related,
+                        $config->table,
+                        $config->foreignPivotKey,
+                        $config->relatedPivotKey
+                    );
+                    return $this->getRelations()[$key] = $relationQuery->get();
                 case 'HasOne':
                     $relationQuery = $this->hasOne($config->related, $config->foreignKey, $config->localKey);
                     // HasOne 返回单个模型实例
@@ -241,7 +257,16 @@ abstract class BaseModel extends Model
         return $this;
     }
 
-
+    /**
+     * 为数组/JSON序列化准备日期。
+     *
+     * @param  DateTimeInterface  $date
+     * @return string
+     */
+    protected function serializeDate(DateTimeInterface $date): string
+    {
+        return $date->format('Y-m-d H:i:s');
+    }
     /**
      * ===================================================================
      * 查 (Read)
