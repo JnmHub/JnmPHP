@@ -1,12 +1,9 @@
 <?php
-// 文件路径: app/Subscribers/DatabaseLogger/Subscriber.php
 
 namespace App\Subscribers\Cors;
 
-use App\Core\Events\AbstractSubscriber;
-use App\Core\Http\Request;
-use Illuminate\Database\Capsule\Manager as DB;
-use Illuminate\Database\Events\QueryExecuted;
+use App\Http\Request\Request;
+use App\Subscribers\AbstractSubscriber;
 
 class Subscriber extends AbstractSubscriber
 {
