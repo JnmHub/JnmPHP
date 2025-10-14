@@ -2,7 +2,9 @@
 
 namespace App\Models;
 
+use App\Attribute\Accessor;
 use App\Attribute\HasMany;
+use App\Attribute\Mutator;
 use App\Attribute\TableField;
 use Illuminate\Database\Eloquent\Collection;
 
@@ -26,7 +28,7 @@ class User extends BaseModel
     protected int $id;
 
     #[TableField(columnName: 'name')]
-    protected string $name;
+    protected string $userName;
 
     #[TableField]
     protected string $email;
@@ -39,4 +41,34 @@ class User extends BaseModel
      */
     #[HasMany(related: Post::class)]
     protected array $posts;
+
+    #[TableField(columnName: 'last_login_at', isFillable: true, cast: 'datetime')] // 时间转换
+    protected ?string $lastLoginAt;
+
+    /**
+     * 用户名字段的访问器。
+     * 无论数据库里存的是什么，获取时都会变成首字母大写的格式。
+     * 例如：存的是 'gemini'，获取 $user->userName 时得到 'Gemini'。
+     * @return string
+     */
+    #[Accessor]
+    public function getUserNameAttribute(?string $value): string
+    {
+        return "ccc".ucfirst((string) $value);
+    }
+
+    /**
+     * 密码字段的修改器。
+     * 当执行 $user->password = 'secret' 时，这个方法会被自动调用。
+     * 存入数据库的将是哈希后的值。
+     * @param string $value
+     */
+    #[Mutator]
+    public function setPasswordAttribute(string $value): string
+    {
+        // 使用 PHP 内置的哈希函数
+        return password_hash($value, PASSWORD_BCRYPT);
+//        $this->attributes['password'] = password_hash($value, PASSWORD_BCRYPT);  // 两种使用方法
+
+    }
 }
