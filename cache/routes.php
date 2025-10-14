@@ -99,4 +99,32 @@
     array (
     ),
   ),
+  7 => 
+  array (
+    'path' => '/{id}/posts',
+    'preg_path' => '#^/(?P<id>[^/]*)/posts$#',
+    'methods' => 
+    array (
+      0 => 'GET',
+    ),
+    'controller' => 'App\\Controller\\IndexController',
+    'action' => 'getUserWithPosts',
+    'middlewares' => 
+    array (
+    ),
+  ),
+  8 => 
+  array (
+    'path' => '/posts/{id}',
+    'preg_path' => '#^/posts/(?P<id>[^/]*)$#',
+    'methods' => 
+    array (
+      0 => 'GET',
+    ),
+    'controller' => 'App\\Controller\\IndexController',
+    'action' => 'getPost',
+    'middlewares' => 
+    array (
+    ),
+  ),
 );

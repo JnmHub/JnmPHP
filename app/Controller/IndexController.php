@@ -9,6 +9,7 @@ use App\Attribute\RequestBody;
 use App\Attribute\RoutePrefix;
 use App\Dto\Department;
 use App\Http\Request\Request;
+use App\Http\Response\JsonResponse;
 use App\Models\User;
 
 #[RoutePrefix('/')]
@@ -74,4 +75,45 @@ class IndexController extends BaseController
         return $user;
     }
 
+    /**
+     * 获取单个用户及其所有文章
+     * 访问 GET /users/1/posts
+     */
+    #[Get('/{id}/posts')]
+    public function getUserWithPosts(int $id)
+    {
+        $user = User::getById($id);
+
+        if (!$user) {
+            return JsonResponse::error('User not found', 404);
+        }
+
+        // ✅ 就像访问普通属性一样，触发关联关系加载！
+        $posts = $user->posts;
+
+        // 演示反向关联
+        // $firstPost = $posts->first();
+        // $postOwner = $firstPost->user; // 触发 BelongsTo
+
+        return [
+            'user' => $user->toArray(), // toArray 不会包含关联，除非我们之后再扩展
+            'posts' => $posts->toArray(),
+        ];
+    }
+    #[Get('/posts/{id}')]
+    public function getPost(int $id)
+    {
+        $post = \App\Models\Post::getById($id);
+        if (!$post) {
+            return ['error' => 'Post not found'];
+        }
+
+        // 触发 BelongsTo 关联加载
+        $user = $post->user;
+
+        return [
+            'post' => $post->toArray(),
+            'user_from_relation' => $user->toArray()
+        ];
+    }
 }

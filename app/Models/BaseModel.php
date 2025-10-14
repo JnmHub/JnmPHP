@@ -2,6 +2,9 @@
 
 namespace App\Models;
 
+use App\Attribute\BelongsTo;
+use App\Attribute\HasMany;
+use App\Attribute\HasOne;
 use App\Attribute\TableField;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Collection;
@@ -80,39 +83,94 @@ abstract class BaseModel extends Model
 
         $metadata = [
             'primaryKey' => 'id',
-            'fillable' => [],
+            'fillable' => [], // 可填入
             'mappings' => [], // ✅ 新增：用于存储 [属性名 => 列名] 的映射
+            'relations' => [] // 关联关系元数据
         ];
 
         foreach ($properties as $property) {
             $attributes = $property->getAttributes(TableField::class);
-            if (empty($attributes)) {
+            $propertyName = $property->getName();
+            if (!empty($attributes)) {
+                $field = $attributes[0]->newInstance();
+
+                // 如果注解中未指定列名，则默认列名等于属性名
+                $columnName = $field->columnName ?? $propertyName;
+                // 存储映射关系
+                $metadata['mappings'][$propertyName] = $columnName;
+                if ($field->isPrimaryKey) {
+                    // 主键的属性名
+                    $metadata['primaryKey'] = $propertyName;
+                }
+                if ($field->isFillable) {
+                    // 可填充的属性名
+                    $metadata['fillable'][] = $propertyName;
+                }
                 continue;
             }
 
-            $field = $attributes[0]->newInstance();
-            $propertyName = $property->getName();
-
-            // 如果注解中未指定列名，则默认列名等于属性名
-            $columnName = $field->columnName ?? $propertyName;
-
-            // 存储映射关系
-            $metadata['mappings'][$propertyName] = $columnName;
-
-            if ($field->isPrimaryKey) {
-                // 主键的属性名
-                $metadata['primaryKey'] = $propertyName;
+            $relationAttributes = $property->getAttributes(HasMany::class);
+            if (!empty($relationAttributes)) {
+                $relation = $relationAttributes[0]->newInstance();
+                $metadata['relations'][$propertyName] = ['type' => 'HasMany', 'config' => $relation];
+                continue; // 这是一个关系属性，跳过后续解析
             }
 
-            if ($field->isFillable) {
-                // 可填充的属性名
-                $metadata['fillable'][] = $propertyName;
+            $relationAttributes = $property->getAttributes(BelongsTo::class);
+            if (!empty($relationAttributes)) {
+                $relation = $relationAttributes[0]->newInstance();
+                $metadata['relations'][$propertyName] = ['type' => 'BelongsTo', 'config' => $relation];
+                continue;
+            }
+            $relationAttributes = $property->getAttributes(HasOne::class);
+            if (!empty($relationAttributes)) {
+                $relation = $relationAttributes[0]->newInstance();
+                $metadata['relations'][$propertyName] = ['type' => 'HasOne', 'config' => $relation];
             }
         }
 
         return self::$classMetadataCache[$class] = $metadata;
     }
+    /**
+     * ✅ 核心改动：重写 __get 魔术方法来处理关联关系加载
+     *
+     * @param string $key
+     * @return mixed
+     */
+    public function __get($key)
+    {
+        // 1. 检查访问的属性是否是我们定义的关联关系
+        $relations = $this->getMetadata()['relations'];
+        if (array_key_exists($key, $relations)) {
+            // 2. 如果关系已经加载过了（缓存），直接返回
+            if ($this->relationLoaded($key)) {
+                return $this->getRelation($key);
+            }
 
+            // 3. 如果没加载过，则执行关联查询
+            $relationMeta = $relations[$key];
+            $config = $relationMeta['config'];
+
+            switch ($relationMeta['type']) {
+                case 'HasOne':
+                    $relationQuery = $this->hasOne($config->related, $config->foreignKey, $config->localKey);
+                    // HasOne 返回单个模型实例
+                    return $this->getRelations()[$key] = $relationQuery->first();
+
+                case 'HasMany':
+                    $relationQuery = $this->hasMany($config->related, $config->foreignKey, $config->localKey);
+                    // 执行查询并缓存结果
+                    return $this->getRelations()[$key] = $relationQuery->get();
+                case 'BelongsTo':
+                    $relationQuery = $this->belongsTo($config->related, $config->foreignKey, $config->ownerKey);
+                    // 执行查询并缓存结果
+                    return $this->getRelations()[$key] = $relationQuery->first();
+            }
+        }
+
+        // 4. 如果不是关联关系，则调用 Eloquent 的默认行为
+        return parent::__get($key);
+    }
     /**
      * ✅ 核心改动：重写 toArray 方法，实现属性名到列名的转换
      *
@@ -122,6 +180,9 @@ abstract class BaseModel extends Model
     {
         // 1. 先获取 Eloquent 默认的、以“列名”为键的数组
         $attributes = parent::toArray();
+        if(!($attributes)) {
+            return [];
+        }
         $newArray = [];
 
         // 2. 获取我们定义的 [属性名 => 列名] 映射
