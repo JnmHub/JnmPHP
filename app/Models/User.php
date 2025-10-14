@@ -1,23 +1,25 @@
 <?php
 
 namespace App\Models;
-use Illuminate\Database\Eloquent\Model;
 
-class User extends Model
+use App\Attribute\TableField;
+
+class User extends BaseModel
 {
-    // 如果你的表名不是 users，可以在这里指定
-    // protected $table = 'my_users';
-
-    // Eloquent默认会管理 created_at 和 updated_at 字段
-    // 如果你没有这两个字段，可以设置 public $timestamps = false;
     /**
-     * ✅ 定义可以被批量赋值的属性。
-     *
-     * @var array
+     * Eloquent 会自动管理 created_at 和 updated_at，
+     * 所以我们不需要为它们添加注解，除非有特殊需求。
      */
-    protected $fillable = [
-        'name',
-        'email',
-        'age', // 假设这些是用户创建时可以提供的字段
-    ];
+
+    #[TableField(isPrimaryKey: true, isFillable: false)] // ID 是主键，通常不允许手动填充
+    protected int $id;
+
+    #[TableField(columnName: 'name')] // 使用默认值：允许填充，列名与属性名一致
+    protected string $userName;
+
+    #[TableField]
+    protected string $email;
+
+    #[TableField(isFillable: false)]
+    protected string $age;
 }

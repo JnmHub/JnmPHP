@@ -9,7 +9,6 @@ use App\Attribute\RequestBody;
 use App\Attribute\RoutePrefix;
 use App\Dto\Department;
 use App\Http\Request\Request;
-use App\Http\Response\ViewResponse;
 use App\Models\User;
 
 #[RoutePrefix('/')]
@@ -17,18 +16,15 @@ class IndexController extends BaseController
 {
     #[Get('/index'),Get('/')]
     #[Middleware("log")]
-    public function index($aaa = null): ViewResponse
+    public function index($aaa = null): User
     {
         // 查找ID为1的用户
         $user = User::find(1);
-        $data = [
-            'title' => 'User Info'.$aaa,
-            'message' => 'Hello, ' . ($user ? $user->name : 'Guest')
-        ];
-        return $this->view('index/index', $data);
+        $user->setUserName("asd");
+        return $user;
     }
     #[Get('/info/{aid}')]
-    public function getInfo(#[PathVariable('aid')]int $id,Request $rrr): string // 结合参数注入，可以接收 ?id=1 这样的参数
+    public function getInfo(#[PathVariable('aid')]int $id,Request $rrr): string
     {
         // ... 查询用户信息的逻辑
         var_dump($rrr);
@@ -71,11 +67,6 @@ class IndexController extends BaseController
     #[Post('/users')]
     public function createUser(#[RequestBody] User $user): User
     {
-        // 此时，$user 对象已经根据请求的 JSON 和 $fillable 属性安全地填充了数据
-
-        // 您可以继续处理，例如哈希密码
-        // $user->password = password_hash($user->password, PASSWORD_DEFAULT);
-
         // 保存到数据库
         $user->save();
 
