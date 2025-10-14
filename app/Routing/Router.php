@@ -7,6 +7,7 @@ use App\Exception\HttpException;
 use App\Helpers\Str;
 use App\Http\MiddlewareManager;
 use App\Http\Pipeline;
+use App\Http\Request\Request;
 use App\Http\Response\JsonResponse;
 use App\Http\Response\ResponseInterface;
 use ReflectionMethod;
@@ -42,7 +43,7 @@ class Router
             $pattern = $route['preg_path'];
             if (preg_match($pattern, $uri, $matches)) {
                 // 提取命名捕获组
-                $params = array_filter($matches, fn($k) => !is_numeric($k), ARRAY_FILTER_USE_KEY);
+                $params = array_filter($matches, fn($k) => !is_numeric($k), ARRAY_FILTER_USE_KEY);  // 获取所有的请求的参数
 
                 $controller = new $route['controller']();
                 $action = $route['action'];
@@ -52,20 +53,25 @@ class Router
                 $args = [];
 
                 foreach ($ref->getParameters() as $param) {
-                    $attrs = $param->getAttributes(PathVariable::class);
-                    $name = $param->getName();
-                    $missingMsg = "缺少参数：{$name}";
+                    $paramType = $param->getType();
+                    if ($paramType && !$paramType->isBuiltin() && $paramType->getName() === Request::class) {
+                        $args[] = Request::capture();
+                        continue; // 继续处理下一个参数
+                    }
+                    $attrs = $param->getAttributes(PathVariable::class); // 获取是否有注解
+                    $name = $param->getName(); // 获取参数的名，不是注解的名
+                    $missingMsg = "缺少参数：{$name}"; // 默认缺少提示
 
-                    if ($attrs) {
-                        $anno = $attrs[0]->newInstance();
-                        $name = $anno->name;
-                        if ($anno->missingParamMessage) {
+                    if ($attrs) {  // 如果有注解
+                        $anno = $attrs[0]->newInstance();  // 获取这个注解的实例
+                        $name = $anno->name;  // 注解自定义的名赋予name
+                        if ($anno->missingParamMessage) {  // 看一下是否有默认的错误提示信息，如果有则覆盖之前的
                             $missingMsg = $anno->missingParamMessage;
                         }
                     }
 
-                    $hasKey = array_key_exists($name, $params);
-                    $value = $hasKey ? $params[$name] : null;
+                    $hasKey = array_key_exists($name, $params);  // 看看是否有这个key
+                    $value = $hasKey ? $params[$name] : null;  // 设置值
 
                     // ✅ 空字符串也算“缺少参数”
                     $isMissing = !$hasKey || $value === '';
@@ -78,7 +84,22 @@ class Router
                             throw new HttpException(400, $missingMsg);
                         }
                     } else {
-                        $args[] = Str::urldecode($value);
+                        $valueToInject = Str::urldecode($value);
+                        $paramType = $param->getType();
+                        if ($paramType && $paramType->isBuiltin()) {
+                            switch ($paramType->getName()) {
+                                case 'int':
+                                    $valueToInject = (int)$valueToInject;
+                                    break;
+                                case 'float':
+                                    $valueToInject = (float)$valueToInject;
+                                    break;
+                                case 'bool':
+                                    $valueToInject = filter_var($valueToInject, FILTER_VALIDATE_BOOLEAN);
+                                    break;
+                            }
+                        }
+                        $args[] = $valueToInject;
                     }
                 }
 

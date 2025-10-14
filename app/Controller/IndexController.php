@@ -6,6 +6,7 @@ use App\Attribute\Middleware;
 use App\Attribute\PathVariable;
 use App\Attribute\Post;
 use App\Attribute\RoutePrefix;
+use App\Http\Request\Request;
 use App\Http\Response\ViewResponse;
 use App\Models\User;
 
@@ -25,7 +26,7 @@ class IndexController extends BaseController
         return $this->view('index/index', $data);
     }
     #[Get('/info/{aid}')]
-    public function getInfo(#[PathVariable('aid')]$id = null): string // 结合参数注入，可以接收 ?id=1 这样的参数
+    public function getInfo(Request $request,#[PathVariable('aid')]int $id = null): string // 结合参数注入，可以接收 ?id=1 这样的参数
     {
         // ... 查询用户信息的逻辑
         return "Fetching user info for ID: " . ($id ?? 'all');
