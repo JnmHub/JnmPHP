@@ -2,9 +2,10 @@
 
 namespace App\Models;
 
-use App\Attribute\BelongsTo;
-use App\Attribute\BelongsToMany;
-use App\Attribute\TableField;
+use Kernel\Attribute\BelongsTo;
+use Kernel\Attribute\BelongsToMany;
+use Kernel\Attribute\TableField;
+use Kernel\Database\BaseModel;
 
 /**
  * --- PHPDoc for IDE ---

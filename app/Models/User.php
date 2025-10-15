@@ -2,11 +2,12 @@
 
 namespace App\Models;
 
-use App\Attribute\Accessor;
-use App\Attribute\HasMany;
-use App\Attribute\Mutator;
-use App\Attribute\TableField;
 use Illuminate\Database\Eloquent\Collection;
+use Kernel\Attribute\Accessor;
+use Kernel\Attribute\HasMany;
+use Kernel\Attribute\Mutator;
+use Kernel\Attribute\TableField;
+use Kernel\Database\BaseModel;
 
 /**
  * --- PHPDoc for IDE ---

@@ -3,7 +3,7 @@
 
 namespace App\Subscribers\DatabaseLogger;
 
-use App\Subscribers\AbstractSubscriber;
+use Kernel\Subscribers\AbstractSubscriber;
 
 class Subscriber extends AbstractSubscriber
 {

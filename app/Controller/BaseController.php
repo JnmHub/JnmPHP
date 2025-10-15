@@ -3,8 +3,8 @@
 namespace App\Controller;
 
 use App\Exception\HttpException;
-use App\Http\Response\FileResponse;
-use App\Http\Response\ViewResponse;
+use Kernel\Response\FileResponse;
+use Kernel\Response\ViewResponse;
 
 class BaseController
 {

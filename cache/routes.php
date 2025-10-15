@@ -11,7 +11,7 @@
     'action' => 'index',
     'middlewares' => 
     array (
-      0 => 'App\\Http\\Middleware\\LogRequestMiddleware',
+      0 => 'App\\Middleware\\LogRequestMiddleware',
     ),
   ),
   1 => 
@@ -26,7 +26,7 @@
     'action' => 'index',
     'middlewares' => 
     array (
-      0 => 'App\\Http\\Middleware\\LogRequestMiddleware',
+      0 => 'App\\Middleware\\LogRequestMiddleware',
     ),
   ),
   2 => 

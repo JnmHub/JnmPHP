@@ -2,9 +2,10 @@
 
 namespace App\Models;
 
-use App\Attribute\BelongsToMany;
-use App\Attribute\TableField;
 use Illuminate\Database\Eloquent\Collection;
+use Kernel\Attribute\BelongsToMany;
+use Kernel\Attribute\TableField;
+use Kernel\Database\BaseModel;
 
 /**
  * --- PHPDoc for IDE ---

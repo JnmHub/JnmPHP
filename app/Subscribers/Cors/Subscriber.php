@@ -2,8 +2,8 @@
 
 namespace App\Subscribers\Cors;
 
-use App\Http\Request\Request;
-use App\Subscribers\AbstractSubscriber;
+use Kernel\Request\Request;
+use Kernel\Subscribers\AbstractSubscriber;
 
 class Subscriber extends AbstractSubscriber
 {

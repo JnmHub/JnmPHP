@@ -1,16 +1,16 @@
 <?php
 namespace App\Controller;
 
-use App\Attribute\Get;
-use App\Attribute\Middleware;
-use App\Attribute\PathVariable;
-use App\Attribute\Post;
-use App\Attribute\RequestBody;
-use App\Attribute\RoutePrefix;
 use App\Dto\Department;
-use App\Http\Request\Request;
-use App\Http\Response\JsonResponse;
 use App\Models\User;
+use Kernel\Attribute\Get;
+use Kernel\Attribute\Middleware;
+use Kernel\Attribute\PathVariable;
+use Kernel\Attribute\Post;
+use Kernel\Attribute\RequestBody;
+use Kernel\Attribute\RoutePrefix;
+use Kernel\Request\Request;
+use Kernel\Response\JsonResponse;
 
 #[RoutePrefix('/')]
 class IndexController extends BaseController

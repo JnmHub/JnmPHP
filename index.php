@@ -1,12 +1,12 @@
 <?php
 declare(strict_types=1);
 
-use App\Database\DB;
-use App\Events\EventManager;
-use App\Exception\handler\ExceptionHandler;
-use App\Routing\RouteCollector;
-use App\Subscribers\SubscriberCollector;
 use Kernel\Container\Container;
+use Kernel\Database\DB;
+use Kernel\Events\EventManager;
+use Kernel\Exception\Handler;
+use Kernel\Routing\RouteCollector;
+use Kernel\Subscribers\SubscriberCollector;
 
 include __DIR__ . "/vendor/autoload.php";
 const APP_ROOT = __DIR__;
@@ -26,16 +26,16 @@ foreach ($subscriberClasses as $class) {
 // 钩子 : 应用初始化后
 $eventManager->dispatch('app.boot');
 Container::init();
-ExceptionHandler::register();
+Handler::register();
 // 从缓存加载路由表
 $routes = RouteCollector::run();
 // 初始化数据库，并连接
 DB::init();
 
 // 格式化JSON和初始化请求参数
-$request = \App\Http\Request\Request::capture();
+$request = \Kernel\Request\Request::capture();
 // 路由转发
-$router = new \App\Routing\Router($routes);
+$router = new \Kernel\Routing\Router($routes);
 $router->dispatch($_SERVER['REQUEST_URI'], $_SERVER['REQUEST_METHOD'],$request);
 // 钩子 : 应用结束前
 $eventManager->dispatch('app.shutdown');
