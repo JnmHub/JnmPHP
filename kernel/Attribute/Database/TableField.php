@@ -16,11 +16,15 @@ class TableField
      * @param bool $isPrimaryKey 是否为主键
      * @param bool $isFillable   是否允许被批量赋值
      * @param string|null $cast     自动类型转换 (例如 'int', 'bool', 'float')
+     * @param bool $isHidden 在序列化时是否隐藏该字段
+     * @param bool $isAppended 是否将该（通常是计算出的）属性追加到序列化结果中
      */
     public function __construct(
         public ?string $columnName = null,
         public bool $isPrimaryKey = false,
         public bool $isFillable = true, // 默认允许填充
-        public ?string $cast = null
+        public ?string $cast = null,
+        public bool $isHidden = false,
+        public bool $isAppended = false
     ) {}
 }

@@ -51,7 +51,7 @@ trait HasAttributes
     public function __call($method, $arguments)
     {
         $prefix = substr($method, 0, 3);
-        if ($prefix !== 'get' && $prefix !== 'set' || str_ends_with($method, 'Attribute')) {
+        if (($prefix !== 'get' && $prefix !== 'set' )) { // || (str_ends_with($method, 'Accessor') || str_ends_with($method, 'Mutator'))
             return parent::__call($method, $arguments);
         }
 
@@ -85,8 +85,10 @@ trait HasAttributes
         $propertyName = $metadata['reverseMappings'][$key] ?? $key;
 
         if (array_key_exists($propertyName, $metadata['accessors'])) {
-            $rawValue = parent::getAttribute($key);
-            return $this->{$metadata['accessors'][$propertyName]}($rawValue);
+            $column = $metadata['mappings'][$key] ?? $propertyName;
+            $rawValue = parent::getAttribute($column);
+            $arrays = $this->getArray();
+            return $this->{$metadata['accessors'][$propertyName]}($rawValue,$arrays);
         }
 
         return parent::getAttribute($key);
@@ -98,6 +100,7 @@ trait HasAttributes
     public function setAttribute($key, $value)
     {
         $metadata = $this->getMetadata();
+        // 无论如何  只要走mutators的  都把 关系对应表的字段也设置值
         $propertyName = $metadata['reverseMappings'][$key] ?? $key;
 
         if (array_key_exists($propertyName, $metadata['mutators'])) {
@@ -111,7 +114,13 @@ trait HasAttributes
             }
             return $this;
         }
-
+        // 把属性名对应的列值  也设置
+        // TODO 校验是否在fillable中 ？
+        if(array_key_exists($key, $metadata['mappings'])) {
+            $column = $metadata['mappings'][$key];
+            $this->attributes[$column] = $value;
+            return $this;
+        }
         return parent::setAttribute($key, $value);
     }
 

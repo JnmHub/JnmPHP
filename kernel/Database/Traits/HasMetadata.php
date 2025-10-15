@@ -42,6 +42,8 @@ trait HasMetadata
             'casts' => [],
             'accessors' => [],
             'mutators' => [],
+            'hidden' => [],  // 用于存储要隐藏的属性名
+            'appends' => [], // 用于存储要追加的属性名
         ];
 
         foreach ($properties as $property) {
@@ -62,6 +64,12 @@ trait HasMetadata
                 }
                 if ($field->cast) {
                     $metadata['casts'][$columnName] = $field->cast;
+                }
+                if ($field->isHidden) {
+                    $metadata['hidden'][] = $propertyName;
+                }
+                if ($field->isAppended) {
+                    $metadata['appends'][] = $propertyName;
                 }
                 continue;
             }
@@ -89,15 +97,15 @@ trait HasMetadata
         foreach ($methods as $method) {
             $methodName = $method->getName();
             if (!empty($method->getAttributes(Accessor::class))) {
-                if (str_ends_with($methodName, 'Attribute') && str_starts_with($methodName, 'get')) {
-                    $propertyName = lcfirst(substr($methodName, 3, -9));
+                if (str_ends_with($methodName, 'Accessor') && str_starts_with($methodName, 'get')) {
+                    $propertyName = lcfirst(substr($methodName, 3, -8));
                     $metadata['accessors'][$propertyName] = $methodName;
                 }
             }
 
             if (!empty($method->getAttributes(Mutator::class))) {
-                if (str_ends_with($methodName, 'Attribute') && str_starts_with($methodName, 'set')) {
-                    $propertyName = lcfirst(substr($methodName, 3, -9));
+                if (str_ends_with($methodName, 'Mutator') && str_starts_with($methodName, 'set')) {
+                    $propertyName = lcfirst(substr($methodName, 3, -8));
                     $metadata['mutators'][$propertyName] = $methodName;
                 }
             }

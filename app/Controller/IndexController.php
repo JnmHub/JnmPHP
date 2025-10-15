@@ -83,10 +83,8 @@ class IndexController extends BaseController
     public function getUserWithPosts(int $id)
     {
         $user = User::getById($id);
+        echo $user->userName;
 
-        if (!$user) {
-            return JsonResponse::error('User not found', 404);
-        }
 
         // ✅ 就像访问普通属性一样，触发关联关系加载！
         $posts = $user->posts;
