@@ -2,8 +2,8 @@
 
 namespace App\Middleware;
 
-use App\Exception\HttpException;
 use Closure;
+use Kernel\Exception\HttpException;
 use Kernel\Middleware\MiddlewareInterface;
 
 class AdminCheckMiddleware implements MiddlewareInterface

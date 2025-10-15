@@ -3,10 +3,10 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Collection;
-use Kernel\Attribute\Accessor;
-use Kernel\Attribute\HasMany;
-use Kernel\Attribute\Mutator;
-use Kernel\Attribute\TableField;
+use Kernel\Attribute\Database\HasMany;
+use Kernel\Attribute\Database\TableField;
+use Kernel\Attribute\ModelAccessor\Accessor;
+use Kernel\Attribute\ModelAccessor\Mutator;
 use Kernel\Database\BaseModel;
 
 /**

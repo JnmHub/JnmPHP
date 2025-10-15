@@ -1,0 +1,22 @@
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteBase /
+
+    # --- 规则 1: 如果请求的文件直接存在于 public 目录，则重写并提供服务 ---
+    # 条件1: 请求的不是一个已存在的目录
+    RewriteCond %{REQUEST_FILENAME} !-d
+    # 条件2: 检查请求的路径在 public 目录下是否存在对应的文件
+    RewriteCond %{DOCUMENT_ROOT}/public%{REQUEST_URI} -f
+    # 动作: 如果以上条件都满足，则在内部将请求重写到 public 目录并立即停止
+    RewriteRule ^(.*)$ public/$1 [L]
+
+
+    # --- 规则 2: 如果以上规则不适用，则执行标准的前端控制器逻辑 ---
+    # 条件1: 请求的不是一个已存在的文件
+    RewriteCond %{REQUEST_FILENAME} !-f
+    # 条件2: 请求的不是一个已存在的目录
+    RewriteCond %{REQUEST_FILENAME} !-d
+    # 动作: 将所有其他请求转发给 index.php，并附上 s 参数
+    RewriteRule ^(.*)$ index.php?s=/$1 [QSA,L]
+
+</IfModule>

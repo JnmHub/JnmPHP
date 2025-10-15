@@ -3,12 +3,12 @@ namespace App\Controller;
 
 use App\Dto\Department;
 use App\Models\User;
-use Kernel\Attribute\Get;
-use Kernel\Attribute\Middleware;
-use Kernel\Attribute\PathVariable;
-use Kernel\Attribute\Post;
-use Kernel\Attribute\RequestBody;
-use Kernel\Attribute\RoutePrefix;
+use Kernel\Attribute\Http\Get;
+use Kernel\Attribute\Http\PathVariable;
+use Kernel\Attribute\Http\Post;
+use Kernel\Attribute\Http\RequestBody;
+use Kernel\Attribute\Http\RoutePrefix;
+use Kernel\Attribute\Middleware\Middleware;
 use Kernel\Request\Request;
 use Kernel\Response\JsonResponse;
 
@@ -122,13 +122,23 @@ class IndexController extends BaseController
         if (!$post) {
             return ['error' => 'Post not found'];
         }
-
         // ✅ 触发 BelongsToMany 关联加载
         $tags = $post->tags;
 
         return [
             'post' => $post->toArray(),
             'tags' => $tags->toArray()
+        ];
+    }
+
+    #[Get('/postsa/tags')]
+    public function getAllPostWithTags()
+    {
+        $post = \App\Models\Post::query()->select(['user_id'])->get();
+
+
+        return [
+            'post' => $post->toArray(),
         ];
     }
 }

@@ -3,9 +3,9 @@
 namespace Kernel\Routing;
 
 use FilesystemIterator;
-use Kernel\Attribute\Middleware;
-use Kernel\Attribute\Route;
-use Kernel\Attribute\RoutePrefix;
+use Kernel\Attribute\Http\Route;
+use Kernel\Attribute\Http\RoutePrefix;
+use Kernel\Attribute\Middleware\Middleware;
 use Kernel\Middleware\MiddlewareManager;
 use ReflectionClass;
 use RuntimeException;

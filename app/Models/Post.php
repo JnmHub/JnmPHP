@@ -2,9 +2,9 @@
 
 namespace App\Models;
 
-use Kernel\Attribute\BelongsTo;
-use Kernel\Attribute\BelongsToMany;
-use Kernel\Attribute\TableField;
+use Kernel\Attribute\Database\BelongsTo;
+use Kernel\Attribute\Database\BelongsToMany;
+use Kernel\Attribute\Database\TableField;
 use Kernel\Database\BaseModel;
 
 /**

@@ -141,4 +141,18 @@
     array (
     ),
   ),
+  10 => 
+  array (
+    'path' => '/postsa/tags',
+    'preg_path' => '#^/postsa/tags$#',
+    'methods' => 
+    array (
+      0 => 'GET',
+    ),
+    'controller' => 'App\\Controller\\IndexController',
+    'action' => 'getAllPostWithTags',
+    'middlewares' => 
+    array (
+    ),
+  ),
 );

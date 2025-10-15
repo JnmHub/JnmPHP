@@ -2,7 +2,6 @@
 
 namespace Kernel\Exception;
 
-use App\Exception\HttpException;
 use Kernel\Response\JsonResponse;
 use Throwable;
 

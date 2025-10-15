@@ -2,7 +2,7 @@
 
 namespace App\Controller;
 
-use App\Exception\HttpException;
+use Kernel\Exception\HttpException;
 use Kernel\Response\FileResponse;
 use Kernel\Response\ViewResponse;
 

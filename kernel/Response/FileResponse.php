@@ -2,7 +2,7 @@
 
 namespace Kernel\Response;
 
-use App\Exception\HttpException;
+use Kernel\Exception\HttpException;
 
 class FileResponse implements ResponseInterface
 {

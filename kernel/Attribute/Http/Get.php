@@ -1,5 +1,5 @@
 <?php
-namespace Kernel\Attribute;
+namespace Kernel\Attribute\Http;
 
 use Attribute;
 

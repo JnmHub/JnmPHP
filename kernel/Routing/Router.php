@@ -1,12 +1,12 @@
 <?php
 namespace Kernel\Routing;
 
-use App\Exception\HttpException;
 use Illuminate\Database\Eloquent\Model;
-use Kernel\Attribute\PathVariable;
-use Kernel\Attribute\RequestBody;
+use Kernel\Attribute\Http\PathVariable;
+use Kernel\Attribute\Http\RequestBody;
 use Kernel\Container\Container;
 use Kernel\Events\EventManager;
+use Kernel\Exception\HttpException;
 use Kernel\Middleware\MiddlewareManager;
 use Kernel\Middleware\Pipeline;
 use Kernel\Request\Request;

@@ -1,6 +1,6 @@
 <?php
 
-namespace Kernel\Attribute;
+namespace Kernel\Attribute\ModelAccessor;
 
 use Attribute;
 

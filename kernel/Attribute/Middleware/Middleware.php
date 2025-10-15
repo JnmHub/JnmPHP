@@ -1,7 +1,7 @@
 <?php
 // 文件路径: app/Core/Attribute/Middleware.php
 
-namespace Kernel\Attribute;
+namespace Kernel\Attribute\Middleware;
 
 use Attribute;
 

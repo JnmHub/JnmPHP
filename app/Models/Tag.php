@@ -3,8 +3,8 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Collection;
-use Kernel\Attribute\BelongsToMany;
-use Kernel\Attribute\TableField;
+use Kernel\Attribute\Database\BelongsToMany;
+use Kernel\Attribute\Database\TableField;
 use Kernel\Database\BaseModel;
 
 /**

@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Exception;
+namespace Kernel\Exception;
 
 class HttpException extends BaseException
 {
