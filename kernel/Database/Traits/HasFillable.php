@@ -108,18 +108,17 @@ trait HasFillable
         $metadata = $this->getMetadata();
         $reverseMappings = $metadata['reverseMappings'];
         $hidden = $metadata['hidden'];
-        foreach ($attributes as $columnName => $value) {
-            if(array_key_exists($columnName, $metadata['accessors'])){
-                $arrays = $this->getArray();
-                $value =  $this->{$metadata['accessors'][$columnName]}($value,$arrays);
-            }
-            $propertyName = $reverseMappings[$columnName] ?? $columnName;
+        $arrays = $this->getArray();
 
-            // 如果属性在 hidden 列表中，则跳过
+        foreach ($attributes as $columnName => $value) {
+            // 转为 属性名，来获取对应的 accessors 来进行处理
+            $propertyName = $reverseMappings[$columnName] ?? $columnName;
             if (in_array($propertyName, $hidden)) {
                 continue;
             }
-
+            if(array_key_exists($propertyName, $metadata['accessors'])){
+                $value =  $this->{$metadata['accessors'][$propertyName]}($value,$arrays);
+            }
             $newArray[$propertyName] = $value;
         }
 

@@ -22,7 +22,6 @@ class IndexController extends BaseController
         // 查找ID为1的用户
         $user = User::find(1);
         $user->name = "asd";
-        $user->password = 'secret';
         return $user->toArray();
     }
     #[Get('/info/{aid}')]
