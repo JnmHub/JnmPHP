@@ -7,6 +7,8 @@ use Illuminate\Database\Eloquent\Collection;
 
 trait HasCrud
 {
+
+
     /**
      * 根据主键ID获取单个模型实例。
      */
