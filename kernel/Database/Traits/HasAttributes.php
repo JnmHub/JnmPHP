@@ -48,32 +48,55 @@ trait HasAttributes
     /**
      * 动态处理对模型属性的 get/set 方法调用。
      */
-    public function __call($method, $arguments)
+    /**
+     * 【已修复】动态处理对模型属性的 get/set 方法调用。
+     *
+     * @param string $method
+     * @param array $parameters
+     * @return mixed
+     * 【已修复并增强】动态处理方法调用。
+     * 现在它不仅支持 get/set，还能动态处理关联关系方法的调用。
+     *
+     */
+    public function __call($method, $parameters)
     {
+        // --- 第一部分：处理我们自定义的 get/set 动态方法 ---
         $prefix = substr($method, 0, 3);
-        if (($prefix !== 'get' && $prefix !== 'set' )) { // || (str_ends_with($method, 'Accessor') || str_ends_with($method, 'Mutator'))
-            return parent::__call($method, $arguments);
-        }
+        if ($prefix === 'get' || $prefix === 'set') {
+            $propertyName = lcfirst(substr($method, 3));
+            $metadata = $this->getMetadata();
 
-        $propertyName = lcfirst(substr($method, 3));
-        $metadata = $this->getMetadata();
-        if (!array_key_exists($propertyName, $metadata['mappings'])) {
-            throw new BadMethodCallException(sprintf('Call to undefined method %s::%s()', static::class, $method));
-        }
-
-        $columnName = $metadata['mappings'][$propertyName];
-
-        if ($prefix === 'get') {
-            return $this->getAttribute($columnName);
-        }
-
-        if ($prefix === 'set') {
-            if (count($arguments) !== 1) {
-                throw new \ArgumentCountError(sprintf('%s::%s() expects exactly one argument, %d given', static::class, $method, count($arguments)));
+            if (array_key_exists($propertyName, $metadata['mappings'])) {
+                $columnName = $metadata['mappings'][$propertyName];
+                if ($prefix === 'get') {
+                    return $this->getAttribute($columnName);
+                }
+                if ($prefix === 'set') {
+                    $this->setAttribute($columnName, $parameters[0]);
+                    return $this;
+                }
             }
-            $this->setAttribute($columnName, $arguments[0]);
-            return $this;
         }
+
+        // --- 第二部分：【新增】处理关联关系方法的调用 ---
+        $relations = $this->getMetadata()['relations'];
+        // 检查被调用的方法名是否存在于我们通过注解定义的关联列表中
+        if (array_key_exists($method, $relations)) {
+            $relationMeta = $relations[$method];
+            $config = $relationMeta['config'];
+
+            // 根据元数据中的关联类型，调用正确的 Eloquent 关联方法并返回 Relation 对象
+            return match ($relationMeta['type']) {
+                'BelongsToMany' => $this->belongsToMany($config->related, $config->table, $config->foreignPivotKey, $config->relatedPivotKey),
+                'HasOne' => $this->hasOne($config->related, $config->foreignKey, $config->localKey),
+                'HasMany' => $this->hasMany($config->related, $config->foreignKey, $config->localKey),
+                'BelongsTo' => $this->belongsTo($config->related, $config->foreignKey, $config->ownerKey),
+            };
+        }
+
+        // --- 第三部分：回退到父类 ---
+        // 如果以上都不是，则将调用交还给父类（例如，启动查询构建器）
+        return parent::__call($method, $parameters);
     }
 
     /**
@@ -85,7 +108,7 @@ trait HasAttributes
         $propertyName = $metadata['reverseMappings'][$key] ?? $key;
 
         if (array_key_exists($propertyName, $metadata['accessors'])) {
-            $column = $metadata['mappings'][$key] ?? $propertyName;
+            $column = $metadata['mappings'][$propertyName] ?? $propertyName;
             $rawValue = parent::getAttribute($column);
             $arrays = $this->getArray();
             return $this->{$metadata['accessors'][$propertyName]}($rawValue,$arrays);
@@ -100,28 +123,30 @@ trait HasAttributes
     public function setAttribute($key, $value)
     {
         $metadata = $this->getMetadata();
-        // 无论如何  只要走mutators的  都把 关系对应表的字段也设置值
         $propertyName = $metadata['reverseMappings'][$key] ?? $key;
 
+        // 1. 优先检查你的注解修改器 (#[Mutator])
+        // 这部分逻辑是正确的，因为它是一个明确的重写意图
         if (array_key_exists($propertyName, $metadata['mutators'])) {
             $mutatorMethod = $metadata['mutators'][$propertyName];
             $returnedValue = $this->{$mutatorMethod}($value);
 
             $reflector = new ReflectionMethod($this, $mutatorMethod);
             if ($reflector->getReturnType() && $reflector->getReturnType()->getName() !== 'void') {
-                $this->attributes[$key] = $returnedValue;
-                return $this;
+                // 注意：这里也应该调用 parent::setAttribute 来设置，而不是直接操作 attributes 数组
+                // $this->attributes[$key] = $returnedValue;  <-- 旧的方式
+                parent::setAttribute($key, $returnedValue); // <-- 推荐的方式
             }
             return $this;
         }
-        // 把属性名对应的列值  也设置
-        // TODO 校验是否在fillable中 ？
-        if(array_key_exists($key, $metadata['mappings'])) {
-            $column = $metadata['mappings'][$key];
-            $this->attributes[$column] = $value;
-            return $this;
-        }
-        return parent::setAttribute($key, $value);
+
+        // 2. 核心改动：将属性名翻译成列名
+        // 无论传入的是属性名(userName)还是列名(name)，都统一处理
+        $columnName = $metadata['mappings'][$key] ?? $key;
+
+        // 3. 将最终的列名和值，全权交给父类的 setAttribute 处理
+        // 这样，所有 Eloquent 的原生功能（类型转换、日期处理等）都会被触发
+        return parent::setAttribute($columnName, $value);
     }
 
     /**
