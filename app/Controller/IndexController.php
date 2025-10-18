@@ -132,11 +132,18 @@ class IndexController extends BaseController
     #[Get('/postsa/tags')]
     public function getAllPostWithTags()
     {
-        $post = \App\Models\Post::query()->select(['user_id'])->get();
+        $posts = \App\Models\User::with('posts')->limit(10)->get();
 
+        $result = [];
+        // 4. 变量名更正为 $posts 和 $post，更符合逻辑
+        foreach ($posts as $post) {
+            // 5. 访问 post 的属性和已经预加载好的 tags 关联
+            $result[] = [
+                'post_title' => $post->name,
+                'tags' => $post->posts
+            ];
+        }
 
-        return [
-            'post' => $post->toArray(),
-        ];
+        return $result;
     }
 }
