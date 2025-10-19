@@ -12,8 +12,9 @@ use Kernel\Middleware\Pipeline;
 use Kernel\Request\Request;
 use Kernel\Response\JsonResponse;
 use Kernel\Response\ResponseInterface;
+use Kernel\Validation\ValidatorFactory;
 use ReflectionMethod;
-
+use Kernel\Database\BaseModel;
 class Router
 {
     private array $routes;
@@ -69,22 +70,53 @@ class Router
                         }
                         $className = $paramType->getName();
                         $classInstance = new $className();
-                        // 从 Request 对象中获取 JSON 数据
+
                         $jsonData = $request->json();
-                        // 核心：将 JSON 数据填充到对象实例中
-                        if ($classInstance instanceof Model) {
-                            // 如果是 Model，使用 fill 方法，这会自动应用 $fillable 白名单
-                            $classInstance->fill($jsonData);
+
+                        // --- 核心改动：验证逻辑 ---
+
+                        // 检查实例是否是我们支持注解的 BaseModel
+                        if ($classInstance instanceof BaseModel) {
+                            $metadata = $classInstance->getMetadata(); // 调用我们设为 public 的方法
+                            $rules = $metadata['rules'];
+                            $reverseMappings = $metadata['reverseMappings'];
+
+                            // 1. 翻译传入的 JSON 数据，使其键名与属性名(rule名)一致
+                            $dataToValidate = [];
+                            foreach ($jsonData as $key => $value) {
+                                // 智能转换：'name' -> 'userName', 'email' -> 'email'
+                                $propertyName = $reverseMappings[$key] ?? $key;
+                                $dataToValidate[$propertyName] = $value;
+                            }
+
+                            // 2. 只有在定义了规则的情况下才执行验证
+                            if (!empty($rules)) {
+                                $factory = new ValidatorFactory();
+                                $validator = $factory->make($dataToValidate, $rules);
+
+                                // validate() 方法会在验证失败时自动抛出 ValidationException
+                                // 并在成功时返回【已验证过】的数据
+                                $validatedData = $validator->validate();
+
+                                // 3. 使用【已验证】的数据填充模型
+                                // (注意：$validatedData 的键是属性名 'userName'，我们的 fill 方法已支持)
+                                $classInstance->fill($validatedData);
+                            } else {
+                                // 没有规则，按原逻辑填充 (仍然推荐用 fill 走安全流程)
+                                $classInstance->fill($jsonData);
+                            }
                         } else {
-                            // 如果是普通 DTO，使用原来的逻辑
+                            // 对普通 DTO，执行原有的简单填充
                             foreach ($jsonData as $key => $value) {
                                 if (property_exists($classInstance, $key)) {
                                     $classInstance->{$key} = $value;
                                 }
                             }
                         }
+                        // --- 验证逻辑结束 ---
+
                         $args[$param->getName()] = $classInstance;
-                        continue; // 处理完毕，跳过该参数的后续 PathVariable 逻辑
+                        continue; // 继续处理下一个参数
                     }
 
                     if ($paramType && !$paramType->isBuiltin() && $paramType->getName() === Request::class) {

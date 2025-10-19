@@ -1,11 +1,11 @@
 <?php
 return [
-    'driver'    => 'mysql',
-    'host'      => '127.0.0.1',
-    'database'  => 'aaa',
-    'username'  => 'root',
-    'password'  => 'root',
-    'charset'   => 'utf8mb4',
-    'collation' => 'utf8mb4_unicode_ci',
-    'prefix'    => '',
+    'driver'    => env('DB_DRIVER', 'mysql'),
+    'host'      => env('DB_HOST', 'localhost'),
+    'database'  => env('DB_DATABASE', 'aaa'),
+    'username'  => env('DB_USERNAME', 'root'),
+    'password'  => env('DB_PASSWORD', 'root'),
+    'charset'   => env('DB_CHARSET', 'utf8'),
+    'collation' => env('DB_COLLATION', 'utf8_unicode_ci'),
+    'prefix'    => env('DB_PREFIX', ''),
 ];

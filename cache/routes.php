@@ -155,4 +155,18 @@
     array (
     ),
   ),
+  11 => 
+  array (
+    'path' => '/products',
+    'preg_path' => '#^/products$#',
+    'methods' => 
+    array (
+      0 => 'POST',
+    ),
+    'controller' => 'App\\Controller\\IndexController',
+    'action' => 'createProduct',
+    'middlewares' => 
+    array (
+    ),
+  ),
 );

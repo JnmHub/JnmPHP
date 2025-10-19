@@ -25,6 +25,8 @@ use Kernel\Database\BaseModel;
  */
 class User extends BaseModel
 {
+
+    protected $table = 'users';
     #[TableField(isPrimaryKey: true, isFillable: false,isHidden: true)]
     protected int $id;
 

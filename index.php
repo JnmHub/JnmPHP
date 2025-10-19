@@ -10,8 +10,14 @@ use Kernel\Subscribers\SubscriberCollector;
 
 include __DIR__ . "/vendor/autoload.php";
 const APP_ROOT = __DIR__;
-date_default_timezone_set('Asia/Shanghai');
-const DEBUG = true;
+require APP_ROOT . '/kernel/Helpers/functions.php';
+
+$dotenv = Dotenv\Dotenv::createImmutable(APP_ROOT);
+$dotenv->load();
+
+
+date_default_timezone_set(env('APP_TIMEZONE'));
+define("DEBUG", env('APP_DEBUG', false));
 $eventManager = EventManager::getInstance();
 $subscriberClasses = SubscriberCollector::run();
 
@@ -36,6 +42,6 @@ DB::init();
 $request = \Kernel\Request\Request::capture();
 // 路由转发
 $router = new \Kernel\Routing\Router($routes);
-$router->dispatch($_SERVER['REQUEST_URI'], $_SERVER['REQUEST_METHOD'],$request);
+$router->dispatch($_SERVER['REQUEST_URI'], $_SERVER['REQUEST_METHOD'], $request);
 // 钩子 : 应用结束前
 $eventManager->dispatch('app.shutdown');

@@ -14,6 +14,9 @@
   ],
   "require": {
     "illuminate/database": "^12.33",
-    "illuminate/container": "^12.33"
+    "illuminate/container": "^12.33",
+    "illuminate/validation": "^12.34",
+    "illuminate/translation": "^12.34",
+    "vlucas/phpdotenv": "^5.6"
   }
 }

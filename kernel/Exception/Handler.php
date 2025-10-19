@@ -2,6 +2,7 @@
 
 namespace Kernel\Exception;
 
+use Illuminate\Validation\ValidationException;
 use Kernel\Response\JsonResponse;
 use Throwable;
 
@@ -44,7 +45,16 @@ class Handler
             foreach ($e->headers as $name => $value) {
                 header($name . ': ' . $value);
             }
-            self::renderDevError($e,$e->statusCode);
+            self::renderJsonError($e,$e->statusCode);
+            return;
+        }
+        // --- 新增：捕获验证异常 ---
+        if ($e instanceof ValidationException) {
+            // 422 Unprocessable Entity
+            http_response_code(422);
+            // 使用你的 JsonResponse 返回一个包含所有错误信息的 JSON
+            JsonResponse::error('Validation Failed', 422, $e->errors())->send();
+//            self::renderDevError($e,500);
             return;
         }
         http_response_code(500);

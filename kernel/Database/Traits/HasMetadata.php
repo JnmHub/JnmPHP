@@ -9,6 +9,7 @@ use Kernel\Attribute\Database\HasOne;
 use Kernel\Attribute\Database\TableField;
 use Kernel\Attribute\ModelAccessor\Accessor;
 use Kernel\Attribute\ModelAccessor\Mutator;
+use Kernel\Attribute\Validation\Validate;
 use ReflectionClass;
 
 trait HasMetadata
@@ -23,7 +24,7 @@ trait HasMetadata
      *
      * @return array
      */
-    protected function getMetadata(): array
+    public function getMetadata(): array
     {
         $class = static::class;
         if (isset(self::$classMetadataCache[$class])) {
@@ -44,12 +45,16 @@ trait HasMetadata
             'mutators' => [],
             'hidden' => [],  // 用于存储要隐藏的属性名
             'appends' => [], // 用于存储要追加的属性名
+            'rules' => []
         ];
 
         foreach ($properties as $property) {
             $attributes = $property->getAttributes(TableField::class);
             $propertyName = $property->getName();
-
+            $validationAttrs = $property->getAttributes(Validate::class);
+            if (!empty($validationAttrs)) {
+                $metadata['rules'][$propertyName] = $validationAttrs[0]->newInstance()->rules;
+            }
             if (!empty($attributes)) {
                 $field = $attributes[0]->newInstance();
                 $columnName = $field->columnName ?? $propertyName;
@@ -109,6 +114,7 @@ trait HasMetadata
                     $metadata['mutators'][$propertyName] = $methodName;
                 }
             }
+
         }
 
         return self::$classMetadataCache[$class] = $metadata;

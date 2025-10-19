@@ -2,6 +2,7 @@
 namespace App\Controller;
 
 use App\Dto\Department;
+use App\Models\Product;
 use App\Models\User;
 use Kernel\Attribute\Http\Get;
 use Kernel\Attribute\Http\PathVariable;
@@ -144,5 +145,26 @@ class IndexController extends BaseController
         }
 
         return $result;
+    }
+
+    /**
+     * 测试 #[Validate] 注解
+     * 使用新的 Product 模型
+     *
+     * @param Product $product
+     * @return Product
+     */
+    #[Post('/products')] //
+    public function createProduct(#[RequestBody] Product $product): Product //
+    {
+        // 1. 验证已在 Router 中自动完成
+        //    如果能执行到这里，说明 $product 已经通过了所有验证规则
+        //    并且已经被 fill() 方法填充了数据
+
+        // 2. (可选) 保存到数据库
+        // $product->save();
+
+        // 3. 将验证和填充后的模型实例返回
+        return $product;
     }
 }
