@@ -21,3 +21,5 @@ Thumbs.db
 # Backup files
 *.bak
 *.swp
+qodana.sarif.json
+qodana.yaml
