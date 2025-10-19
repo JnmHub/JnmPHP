@@ -1,6 +1,176 @@
 <?php return array (
   0 => 
   array (
+    'path' => '/admin/index',
+    'preg_path' => '#^/admin/index$#',
+    'methods' => 
+    array (
+      0 => 'GET',
+    ),
+    'controller' => 'App\\Controller\\admin\\IndexController',
+    'action' => 'index',
+    'middlewares' => 
+    array (
+      0 => 'App\\Middleware\\LogRequestMiddleware',
+    ),
+  ),
+  1 => 
+  array (
+    'path' => '/admin/',
+    'preg_path' => '#^/admin$#',
+    'methods' => 
+    array (
+      0 => 'GET',
+    ),
+    'controller' => 'App\\Controller\\admin\\IndexController',
+    'action' => 'index',
+    'middlewares' => 
+    array (
+      0 => 'App\\Middleware\\LogRequestMiddleware',
+    ),
+  ),
+  2 => 
+  array (
+    'path' => '/admin/info/{aid}',
+    'preg_path' => '#^/admin/info/(?P<aid>[^/]*)$#',
+    'methods' => 
+    array (
+      0 => 'GET',
+    ),
+    'controller' => 'App\\Controller\\admin\\IndexController',
+    'action' => 'getInfo',
+    'middlewares' => 
+    array (
+    ),
+  ),
+  3 => 
+  array (
+    'path' => '/admin/department',
+    'preg_path' => '#^/admin/department$#',
+    'methods' => 
+    array (
+      0 => 'POST',
+    ),
+    'controller' => 'App\\Controller\\admin\\IndexController',
+    'action' => 'createDepartment',
+    'middlewares' => 
+    array (
+    ),
+  ),
+  4 => 
+  array (
+    'path' => '/admin/user/{uid}/order/{oid}',
+    'preg_path' => '#^/admin/user/(?P<uid>[^/]*)/order/(?P<oid>[^/]*)$#',
+    'methods' => 
+    array (
+      0 => 'GET',
+    ),
+    'controller' => 'App\\Controller\\admin\\IndexController',
+    'action' => 'getOrder',
+    'middlewares' => 
+    array (
+    ),
+  ),
+  5 => 
+  array (
+    'path' => '/admin/user/{id}',
+    'preg_path' => '#^/admin/user/(?P<id>[^/]*)$#',
+    'methods' => 
+    array (
+      0 => 'GET',
+    ),
+    'controller' => 'App\\Controller\\admin\\IndexController',
+    'action' => 'getUser',
+    'middlewares' => 
+    array (
+    ),
+  ),
+  6 => 
+  array (
+    'path' => '/admin/users',
+    'preg_path' => '#^/admin/users$#',
+    'methods' => 
+    array (
+      0 => 'POST',
+    ),
+    'controller' => 'App\\Controller\\admin\\IndexController',
+    'action' => 'createUser',
+    'middlewares' => 
+    array (
+    ),
+  ),
+  7 => 
+  array (
+    'path' => '/admin/{id}/posts',
+    'preg_path' => '#^/admin/(?P<id>[^/]*)/posts$#',
+    'methods' => 
+    array (
+      0 => 'GET',
+    ),
+    'controller' => 'App\\Controller\\admin\\IndexController',
+    'action' => 'getUserWithPosts',
+    'middlewares' => 
+    array (
+    ),
+  ),
+  8 => 
+  array (
+    'path' => '/admin/posts/{id}',
+    'preg_path' => '#^/admin/posts/(?P<id>[^/]*)$#',
+    'methods' => 
+    array (
+      0 => 'GET',
+    ),
+    'controller' => 'App\\Controller\\admin\\IndexController',
+    'action' => 'getPost',
+    'middlewares' => 
+    array (
+    ),
+  ),
+  9 => 
+  array (
+    'path' => '/admin/posts/{id}/tags',
+    'preg_path' => '#^/admin/posts/(?P<id>[^/]*)/tags$#',
+    'methods' => 
+    array (
+      0 => 'GET',
+    ),
+    'controller' => 'App\\Controller\\admin\\IndexController',
+    'action' => 'getPostWithTags',
+    'middlewares' => 
+    array (
+    ),
+  ),
+  10 => 
+  array (
+    'path' => '/admin/postsa/tags',
+    'preg_path' => '#^/admin/postsa/tags$#',
+    'methods' => 
+    array (
+      0 => 'GET',
+    ),
+    'controller' => 'App\\Controller\\admin\\IndexController',
+    'action' => 'getAllPostWithTags',
+    'middlewares' => 
+    array (
+    ),
+  ),
+  11 => 
+  array (
+    'path' => '/admin/products',
+    'preg_path' => '#^/admin/products$#',
+    'methods' => 
+    array (
+      0 => 'POST',
+    ),
+    'controller' => 'App\\Controller\\admin\\IndexController',
+    'action' => 'createProduct',
+    'middlewares' => 
+    array (
+    ),
+  ),
+  12 => 
+  array (
     'path' => '/index',
     'preg_path' => '#^/index$#',
     'methods' => 
@@ -14,7 +184,7 @@
       0 => 'App\\Middleware\\LogRequestMiddleware',
     ),
   ),
-  1 => 
+  13 => 
   array (
     'path' => '/',
     'preg_path' => '#^/$#',
@@ -29,7 +199,7 @@
       0 => 'App\\Middleware\\LogRequestMiddleware',
     ),
   ),
-  2 => 
+  14 => 
   array (
     'path' => '/info/{aid}',
     'preg_path' => '#^/info/(?P<aid>[^/]*)$#',
@@ -43,7 +213,7 @@
     array (
     ),
   ),
-  3 => 
+  15 => 
   array (
     'path' => '/department',
     'preg_path' => '#^/department$#',
@@ -57,7 +227,7 @@
     array (
     ),
   ),
-  4 => 
+  16 => 
   array (
     'path' => '/user/{uid}/order/{oid}',
     'preg_path' => '#^/user/(?P<uid>[^/]*)/order/(?P<oid>[^/]*)$#',
@@ -71,7 +241,7 @@
     array (
     ),
   ),
-  5 => 
+  17 => 
   array (
     'path' => '/user/{id}',
     'preg_path' => '#^/user/(?P<id>[^/]*)$#',
@@ -85,7 +255,7 @@
     array (
     ),
   ),
-  6 => 
+  18 => 
   array (
     'path' => '/users',
     'preg_path' => '#^/users$#',
@@ -99,7 +269,7 @@
     array (
     ),
   ),
-  7 => 
+  19 => 
   array (
     'path' => '/{id}/posts',
     'preg_path' => '#^/(?P<id>[^/]*)/posts$#',
@@ -113,7 +283,7 @@
     array (
     ),
   ),
-  8 => 
+  20 => 
   array (
     'path' => '/posts/{id}',
     'preg_path' => '#^/posts/(?P<id>[^/]*)$#',
@@ -127,7 +297,7 @@
     array (
     ),
   ),
-  9 => 
+  21 => 
   array (
     'path' => '/posts/{id}/tags',
     'preg_path' => '#^/posts/(?P<id>[^/]*)/tags$#',
@@ -141,7 +311,7 @@
     array (
     ),
   ),
-  10 => 
+  22 => 
   array (
     'path' => '/postsa/tags',
     'preg_path' => '#^/postsa/tags$#',
@@ -155,7 +325,7 @@
     array (
     ),
   ),
-  11 => 
+  23 => 
   array (
     'path' => '/products',
     'preg_path' => '#^/products$#',

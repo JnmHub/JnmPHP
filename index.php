@@ -1,47 +1,33 @@
 <?php
 declare(strict_types=1);
 
-use Kernel\Container\Container;
-use Kernel\Database\DB;
+use Kernel\Application;
 use Kernel\Events\EventManager;
-use Kernel\Exception\Handler;
-use Kernel\Routing\RouteCollector;
-use Kernel\Subscribers\SubscriberCollector;
+use Kernel\Request\Request;
 
 include __DIR__ . "/vendor/autoload.php";
 const APP_ROOT = __DIR__;
-require APP_ROOT . '/kernel/Helpers/functions.php';
+require APP_ROOT . '/kernel/Helpers/functions.php'; // 加载你的 env() 函数
+
 
 $dotenv = Dotenv\Dotenv::createImmutable(APP_ROOT);
 $dotenv->load();
-
-
 date_default_timezone_set(env('APP_TIMEZONE'));
 define("DEBUG", env('APP_DEBUG', false));
-$eventManager = EventManager::getInstance();
-$subscriberClasses = SubscriberCollector::run();
 
-// 2. 遍历类名，实例化并执行其生命周期方法
-foreach ($subscriberClasses as $class) {
-    $subscriber = new $class($eventManager); // 构造函数注入 EventManager
 
-    $subscriber->beforeSubscribe(); // 调用前置钩子
-    $subscriber->subscribe();      // 执行核心事件注册
-    $subscriber->afterSubscribe(); // 调用后置钩子
-}
-// 钩子 : 应用初始化后
+$app = new Application();
+$app->registerProviders();
+$app->bootProviders();
+
+
+
+$eventManager = $app->getContainer()->make(EventManager::class);
 $eventManager->dispatch('app.boot');
-Container::init();
-Handler::register();
-// 从缓存加载路由表
-$routes = RouteCollector::run();
-// 初始化数据库，并连接
-DB::init();
 
-// 格式化JSON和初始化请求参数
-$request = \Kernel\Request\Request::capture();
-// 路由转发
-$router = new \Kernel\Routing\Router($routes);
-$router->dispatch($_SERVER['REQUEST_URI'], $_SERVER['REQUEST_METHOD'], $request);
-// 钩子 : 应用结束前
+
+$request = Request::capture();
+$app->handle($request);
+
+
 $eventManager->dispatch('app.shutdown');
