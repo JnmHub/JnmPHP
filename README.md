@@ -1,10 +1,8 @@
 # JnmPHP 框架
 
-
-
 JnmPHP 是一个轻量级、现代化的 PHP 框架，专为快速构建高性能 API 和 Web 应用而设计。它巧妙地融合了 `illuminate` (Laravel) 的核心组件（如 Eloquent ORM、Blade 模板引擎、Validation 和 Container）与现代 PHP 8+ 的特性（尤其是 **Attributes**），提供了一个优雅且高效的开发体验。
 
-框架的核心设计理念是“**配置即代码**”，通过 PHP Attributes（注解）来定义路由、模型关系、验证规则和中间件，极大地减少了传统配置文件，使代码更具表现力且易于维护。
+框架的核心设计理念是"**配置即代码**"，通过 PHP Attributes（注解）来定义路由、模型关系、验证规则和中间件，极大地减少了传统配置文件，使代码更具表现力且易于维护。
 
 
 
@@ -12,7 +10,7 @@ JnmPHP 是一个轻量级、现代化的 PHP 框架，专为快速构建高性�
 
 
 
-- **[x] 现代化 & 轻量级**: 充分利用 PHP 8+ 的 Attributes 特性，代码简洁明了。
+- **[x] 现代化 & 轻量级**: 充分利用 PHP 8.2+ 的 Attributes 特性，代码简洁明了。
 - **[x] 声明式路由**: 使用 `#[Get]`, `#[Post]`, `#[RoutePrefix]` 等注解在控制器中直接定义路由。
 - **[x] 强大的 ORM**: 深度集成 `illuminate/database` (Eloquent)，并在此基础上通过 `#[TableField]`、`#[HasMany]`、`#[BelongsTo]` 等注解实现了模型的全自动配置。
 - **[x] 自动验证**: 可选的 `#[Validate]` 注解，结合 `#[RequestBody]` 可实现对 JSON 请求的自动验证和模型绑定。
@@ -25,6 +23,7 @@ JnmPHP 是一个轻量级、现代化的 PHP 框架，专为快速构建高性�
 - **[x] 多语言支持**: 集成 `illuminate/translation`，支持 `lang` 目录下的多语言文件。
 - **[x] DTO 支持**: 支持使用纯数据传输对象 (DTO) 接收请求，自动进行 JSON 绑定。
 - **[x] 智能缓存**: 自动缓存路由、视图和订阅者解析结果，提升应用性能。
+- **[x] 控制台命令**: 基于 `symfony/console` 提供强大的命令行工具，包含 IDE 辅助文件生成器。
 
 
 
@@ -442,7 +441,41 @@ public function createDepartment(#[RequestBody] Department $department): Departm
 }
 ```
 
-### 6. 中间件
+### 6. 控制台命令
+
+框架基于 `symfony/console` 提供了强大的命令行工具支持。项目根目录下的 `jnm` 文件是主要的命令行入口点。
+
+**可用的内置命令:**
+
+- `app:hello-world [name] [--uppercase|-u]` - 输出 Hello World 消息，支持参数和选项
+- `ide-helper:models` - 为模型生成 IDE 辅助文件，提供代码自动补全
+
+**使用命令:**
+
+```bash
+# 基本用法
+php jnm <command>
+
+# 示例：
+php jnm app:hello-world World
+php jnm app:hello-world JnmPHP --uppercase
+
+# 为所有模型生成 PHPDoc 注解，支持 IDE 代码提示
+php jnm ide-helper:models
+```
+
+**IDE 辅助功能:**
+
+`ide-helper:models` 命令生成的辅助文件 `app/_ide_helper_models.php` 包含：
+- 所有模型的属性注解 (`@property`)
+- 静态魔术方法注解 (`@method static`)
+- Eloquent 关联方法注解
+- 模型访问器/修改器方法注解
+- 常用 Eloquent 方法提示
+
+这将大大提升在 IDE 中使用模型的开发体验，支持完整的代码自动补全功能。
+
+### 7. 中间件
 
 
 
@@ -504,7 +537,7 @@ public function createDepartment(#[RequestBody] Department $department): Departm
    }
    ```
 
-### 7. 高级路由功能
+### 8. 高级路由功能
 
 框架支持多种路由属性组合，提供灵活的路由定义：
 
