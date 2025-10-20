@@ -1,5 +1,42 @@
 <?php
 
+
+if (!function_exists('app')) {
+    /**
+     * @param string|null $abstract
+     * @return \kernel\Container\Container|mixed
+     * @throws Exception
+     */
+    function app(string $abstract = null)
+    {
+        $container = \kernel\Application::getInstance()->getContainer();
+        if (is_null($abstract)) {
+            return $container;
+        }
+
+        return $container->get($abstract);
+    }
+}
+
+// [!code ++]
+if (!function_exists('e')) {
+    /**
+     * 对字符串进行 HTML 转义.
+     *
+     * @param string|null $value
+     * @param bool $doubleEncode
+     * @return string
+     */
+    function e($value, $doubleEncode = true)
+    {
+        if ($value === null) {
+            return '';
+        }
+
+        return htmlspecialchars($value, ENT_QUOTES, 'UTF-8', $doubleEncode);
+    }
+}
+// [!code ++]
 if (!function_exists('env')) {
     /**
      * 获取一个环境变量的值，并进行智能类型转换。

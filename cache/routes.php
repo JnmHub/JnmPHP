@@ -171,23 +171,22 @@
   ),
   12 => 
   array (
-    'path' => '/index',
-    'preg_path' => '#^/index$#',
+    'path' => '/',
+    'preg_path' => '#^/$#',
     'methods' => 
     array (
       0 => 'GET',
     ),
     'controller' => 'App\\Controller\\IndexController',
-    'action' => 'index',
+    'action' => 'indexView',
     'middlewares' => 
     array (
-      0 => 'App\\Middleware\\LogRequestMiddleware',
     ),
   ),
   13 => 
   array (
-    'path' => '/',
-    'preg_path' => '#^/$#',
+    'path' => '/index',
+    'preg_path' => '#^/index$#',
     'methods' => 
     array (
       0 => 'GET',

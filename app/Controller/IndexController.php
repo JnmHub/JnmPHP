@@ -16,7 +16,23 @@ use Kernel\Response\JsonResponse;
 #[RoutePrefix('/')]
 class IndexController extends BaseController
 {
-    #[Get('/index'),Get('/')]
+    #[Get('/')]
+    public function indexView()
+    {
+        $products = [
+            ['name' => '产品A', 'price' => 100],
+            ['name' => '产品B', 'price' => 200],
+        ];
+
+        // 关键改动：
+        // 将 'index/index' 修改为 'index.index'
+        // ViewResponse 会自动寻找 .blade.php 文件
+        return $this->view('index.index', [
+            'name'     => 'JnmPHP 开发者',
+            'products' => $products
+        ]);
+    }
+    #[Get('/index')]
     #[Middleware("log")]
     public function index($aaa = null)
     {

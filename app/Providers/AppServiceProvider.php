@@ -2,6 +2,9 @@
 
 namespace App\Providers;
 
+use Illuminate\Filesystem\Filesystem;
+use Illuminate\Translation\FileLoader;
+use Illuminate\Translation\Translator;
 use Kernel\Events\EventManager;
 use Kernel\Exception\Handler;
 use Kernel\Providers\ServiceProvider;
@@ -19,6 +22,15 @@ class AppServiceProvider extends ServiceProvider
         $this->container->singleton(Handler::class, function () {
             return new Handler();
         });
+        $this->container->singleton('translator', function () {
+            $loader = new FileLoader(new Filesystem(), APP_ROOT . '/lang');
+            return new Translator($loader, env('APP_LOCALE'));
+        });
+
+        // 'validator' 绑定
+//        $this->container->singleton('validator', function () {
+//            return new ValidatorFactory();
+//        });
     }
 
     public function boot(): void
