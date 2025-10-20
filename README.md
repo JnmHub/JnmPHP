@@ -23,6 +23,8 @@ JnmPHP 是一个轻量级、现代化的 PHP 框架，专为快速构建高性�
 - **[x] 事件 & 订阅者**: 简单的事件管理器，支持通过 `EventServiceProvider` 自动发现和注册事件订阅者。
 - **[x] 强大的异常处理**: 自动捕获 `ValidationException` 和 `HttpException`，并返回标准化的 JSON 错误响应。
 - **[x] 多语言支持**: 集成 `illuminate/translation`，支持 `lang` 目录下的多语言文件。
+- **[x] DTO 支持**: 支持使用纯数据传输对象 (DTO) 接收请求，自动进行 JSON 绑定。
+- **[x] 智能缓存**: 自动缓存路由、视图和订阅者解析结果，提升应用性能。
 
 
 
@@ -58,12 +60,17 @@ composer install
 # 3. 创建环境变量文件
 cp .env.example .env
 
-# 4. 生成应用密钥（如果需要）和配置 .env
+# 4. 配置 .env 文件
 # 至少需要配置数据库连接信息：
 # DB_HOST=127.0.0.1
 # DB_DATABASE=aaa
 # DB_USERNAME=root
 # DB_PASSWORD=root
+# APP_DEBUG=true
+# APP_TIMEZONE=Asia/Shanghai
+
+# 5. 启动开发服务器
+php -S localhost:8000
 ```
 
 
@@ -399,7 +406,43 @@ class IndexController extends BaseController
 
 
 
-### 5. 中间件
+### 5. 数据传输对象 (DTO)
+
+除了 Eloquent 模型，框架还支持使用纯 DTO 类来接收请求体数据：
+
+**示例 DTO 类: `app/Dto/Department.php`**
+
+PHP
+
+```
+<?php
+
+namespace App\Dto;
+
+class Department
+{
+    public ?int $id = null;
+    public ?string $name = null;
+    public ?string $location = null;
+}
+```
+
+**在控制器中使用 DTO:**
+
+PHP
+
+```
+#[Post('/department')]
+public function createDepartment(#[RequestBody] Department $department): Department
+{
+    $department->id = rand(100, 999);
+
+    // 框架会自动将返回的对象转为 JSON
+    return $department;
+}
+```
+
+### 6. 中间件
 
 
 
@@ -415,11 +458,15 @@ class IndexController extends BaseController
    {
        public function handle(mixed $request, Closure $next)
        {
-           if (!isAuthenticated()) {
-               // 抛出 HttpException，框架会自动返回 401 JSON 错误
+           $expectedToken = 'Bearer my-secret-token';
+
+           if (!isset($_SERVER['HTTP_AUTHORIZATION']) || $_SERVER['HTTP_AUTHORIZATION'] !== $expectedToken) {
+               // 验证失败, 抛出异常, 中断请求
                throw new HttpException(401, 'Unauthorized');
            }
-           return $next($request); // 通过，继续请求
+
+           // 验证通过, 继续处理请求
+           return $next($request);
        }
    }
    ```
@@ -450,12 +497,89 @@ class IndexController extends BaseController
    {
        #[Get('/dashboard')] // 已受 'auth' 保护
        public function dashboard() { ... }
-   
+
        #[Post('/logs/clear')]
        #[Middleware('admin')] // 额外需要 'admin' 中间件
        public function clearLogs() { ... }
    }
    ```
+
+### 7. 高级路由功能
+
+框架支持多种路由属性组合，提供灵活的路由定义：
+
+**多路由绑定到同一方法:**
+
+PHP
+
+```
+#[Get('/index'), Get('/')]
+#[Middleware("log")]
+public function index($aaa = null)
+{
+    return ['message' => 'Hello from index'];
+}
+```
+
+**重复路由属性:**
+
+PHP
+
+```
+#[Route('/users', ['GET', 'POST'])]
+#[Route('/api/users', ['GET', 'POST'])]
+public function handleUsers()
+{
+    // 处理用户相关的请求
+}
+```
+
+## API 示例
+
+以下是一些完整的 API 使用示例：
+
+### 获取用户及其关联数据
+
+PHP
+
+```
+#[Get('/users/{id}/posts')]
+public function getUserWithPosts(int $id)
+{
+    $user = User::getById($id);
+
+    // 触发关联关系加载
+    $posts = $user->posts;
+
+    return [
+        'user' => $user->toArray(),
+        'posts' => $posts->toArray(),
+    ];
+}
+```
+
+### 关联查询示例
+
+PHP
+
+```
+#[Get('/posts/{id}/tags')]
+public function getPostWithTags(int $id)
+{
+    $post = \App\Models\Post::getById($id);
+    if (!$post) {
+        return ['error' => 'Post not found'];
+    }
+
+    // 触发 BelongsToMany 关联加载
+    $tags = $post->tags;
+
+    return [
+        'post' => $post->toArray(),
+        'tags' => $tags->toArray()
+    ];
+}
+```
 
 
 

@@ -1,0 +1,97 @@
+#!/usr/bin/env php
+<?php
+// jnm (CLI 入口文件)
+
+// 1. 引导框架 (与 index.php 类似，但不需要处理 Request)
+declare(strict_types=1);
+
+use Kernel\Application;
+use Symfony\Component\Console\Application as ConsoleApplication;
+use Symfony\Component\Console\Command\Command;
+use Symfony\Component\Finder\Finder;
+
+// [!code ++]
+
+// [!code --] include __DIR__ . "/vendor/autoload.php";
+// [!code ++]
+$autoloadPath = __DIR__ . "/vendor/autoload.php";
+if (!file_exists($autoloadPath)) {
+    echo "[ERROR] vendor/autoload.php not found. Please run 'composer install'.\n";
+    exit(1);
+}
+require $autoloadPath;
+// [!code ++]
+
+const APP_ROOT = __DIR__;
+require APP_ROOT . '/kernel/Helpers/functions.php'; // 加载 env() 函数
+
+try {
+    $dotenv = Dotenv\Dotenv::createImmutable(APP_ROOT);
+    $dotenv->load();
+} catch (\Throwable $e) {
+    echo "[WARNING] Could not load .env file: " . $e->getMessage() . "\n";
+}
+
+date_default_timezone_set(env('APP_TIMEZONE', 'UTC'));
+define("DEBUG", env('APP_DEBUG', false));
+
+// 启动应用，注册所有服务 (命令可能需要访问数据库、配置等)
+try {
+    $app = Kernel\Application::getInstance();
+    $app->registerProviders();
+    $app->bootProviders();
+    $container = $app->getContainer(); // [!code ++] 获取容器实例
+} catch (\Throwable $e) {
+    echo "[ERROR] Failed to bootstrap the application: " . $e->getMessage() . "\n";
+    echo $e->getTraceAsString() . "\n";
+    exit(1);
+}
+
+// 2. 创建 Symfony Console 应用实例 [!code ++]
+$consoleApp = new ConsoleApplication('JnmPHP Console', '1.0.0');
+
+// 3. 注册您的命令 [!code ++]
+$commandPath = APP_ROOT . '/app/Console/Commands';
+$appNamespace = '\\App\\'; // 基础命名空间
+
+if (is_dir($commandPath)) {
+    $finder = new Finder();
+    $finder->files()->in($commandPath)->name('*.php'); // 查找所有 PHP 文件
+
+    foreach ($finder as $file) {
+        // 从文件路径构建类名
+        $relativePath = str_replace(APP_ROOT . '/app/', '', $file->getRealPath());
+        $classPath = str_replace(['/', '.php'], ['\\', ''], $relativePath);
+        $className = $appNamespace . $classPath;
+
+        try {
+            if (class_exists($className)) {
+                $reflection = new \ReflectionClass($className);
+                // 检查是否是 Symfony Command 的有效子类且可实例化
+                if ($reflection->isSubclassOf(Command::class) && !$reflection->isAbstract()) {
+                    // 实例化命令并添加到应用
+                    $commandInstance = new $className();
+                    $consoleApp->add($commandInstance);
+                    echo "[DEBUG] Auto-registered command: " . $className . "\n";
+                } else {
+                    echo "[DEBUG] Skipped (not a valid command): " . $className . "\n";
+                }
+            } else {
+                echo "[DEBUG] Skipped (class not found): " . $className . "\n";
+            }
+        } catch (\Throwable $e) {
+            echo "[WARNING] Error reflecting or adding command {$className}: " . $e->getMessage() . "\n";
+        }
+    }
+} else {
+    echo "[WARNING] Command directory not found: " . $commandPath . "\n";
+}
+
+// 4. 运行 Console 应用 [!code ++]
+try {
+    $consoleApp->run();
+} catch (Exception $e) {
+    // 处理运行期间的异常
+    echo "[ERROR] Console application error: " . $e->getMessage() . "\n";
+    exit(1);
+}
