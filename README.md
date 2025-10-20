@@ -110,8 +110,15 @@ php -S localhost:8000
 
 ## 框架使用指南
 
+## 辅助工具
 
-
+listenDir 是一个由Go编写的一个小工具，可以监听某一个文件夹内的所有文件的变化，如果发生变化则执行指定的cmd命令
+例：
+```bash
+ ./listenDir -dir "app/Models" -cmd "php jnm ide-helper:models"
+```
+- -dir 指定要监听的文件夹
+- -cmd 需要执行的命令
 
 
 ### 1. 定义路由
