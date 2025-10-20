@@ -8,6 +8,7 @@ use Kernel\Routing\Router;
 
 class Application
 {
+    private static ?self $instance = null;
     /**
      * 服务容器实例
      */
@@ -17,8 +18,14 @@ class Application
      * 已注册的服务提供者
      */
     protected array $providers = [];
-
-    public function __construct()
+    public static function getInstance(): self
+    {
+        if(!isset(self::$instance)){
+            self::$instance = new self();
+        }
+        return self::$instance;
+    }
+    private function __construct()
     {
         // 1. 初始化容器
         $this->container = Container::getInstance();

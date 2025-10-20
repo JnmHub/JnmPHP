@@ -16,7 +16,7 @@ date_default_timezone_set(env('APP_TIMEZONE'));
 define("DEBUG", env('APP_DEBUG', false));
 
 
-$app = new Application();
+$app = Application::getInstance();
 $app->registerProviders();
 $app->bootProviders();
 
