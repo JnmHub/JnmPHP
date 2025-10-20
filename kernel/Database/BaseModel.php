@@ -3,6 +3,7 @@
 namespace Kernel\Database;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Str;
 use Kernel\Database\Traits\HasAttributes;
 use Kernel\Database\Traits\HasCrud;
 use Kernel\Database\Traits\HasFillable;
@@ -14,4 +15,6 @@ abstract class BaseModel extends Model
         HasAttributes,
         HasCrud,
         HasFillable;
+
+
 }

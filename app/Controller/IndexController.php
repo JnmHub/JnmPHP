@@ -19,9 +19,11 @@ class IndexController extends BaseController
     #[Get('/')]
     public function indexView()
     {
+        $user = new User();
+        $user->setId("111");
         $products = [
-            ['name' => '产品A', 'price' => 100],
-            ['name' => '产品B', 'price' => 200],
+            ['name' => User::_UserName(), 'price' => 100],
+            ['name' => $user->posts, 'price' => 200],
         ];
 
         // 关键改动：

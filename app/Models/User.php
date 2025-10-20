@@ -9,20 +9,7 @@ use Kernel\Attribute\ModelAccessor\Accessor;
 use Kernel\Attribute\ModelAccessor\Mutator;
 use Kernel\Database\BaseModel;
 
-/**
- * --- PHPDoc for IDE ---
- * @property int $id
- * @property string $userName
- * @property string $email
- * @property-read Collection|Post[] $posts
- *
- * --- Auto Getters/Setters ---
- * @method int|null    getId()
- * @method string|null getUserName()
- * @method string|null getEmail()
- * @method $this       setUserName(string $value)
- * @method $this       setEmail(string $value)
- */
+
 class User extends BaseModel
 {
 

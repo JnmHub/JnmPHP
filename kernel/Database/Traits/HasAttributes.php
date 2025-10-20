@@ -4,6 +4,7 @@ namespace Kernel\Database\Traits;
 
 use BadMethodCallException;
 use DateTimeInterface;
+use Illuminate\Support\Str;
 use ReflectionMethod;
 
 trait HasAttributes
@@ -148,7 +149,57 @@ trait HasAttributes
         // 这样，所有 Eloquent 的原生功能（类型转换、日期处理等）都会被触发
         return parent::setAttribute($columnName, $value);
     }
+    /**
+     * 静态魔术方法，用于实现：
+     * 1. 属性名 -> 列名 的转换 (例如: User::_UserName() 返回 'name')
+     * 2. 属性名 -> 魔术where (例如: User::whereUserName('value') 自动转为 where('name', 'value'))
+     *
+     * @param string $method
+     * @param array $parameters
+     * @return mixed
+     */
+    public static function __callStatic($method, $parameters) // <- 修正：移除了 string 和 array 类型提示
+    {
+        // 我们需要元数据，但 getMetadata() 是实例方法。
+        // 我们可以安全地创建一个临时实例来获取元数据，
+        // 因为 HasMetadata Trait 会将结果静态缓存。
+        $metadata = (new static())->getMetadata();
 
+        // 方案一：实现 User::_PropertyName() -> 'column_name'
+        // (对应您的提议：User::_UserName())
+        if (str_starts_with($method, '_')) {
+            $propertyName = lcfirst(substr($method, 1)); // '_userName' -> 'userName'
+
+            if (isset($metadata['mappings'][$propertyName])) {
+                return $metadata['mappings'][$propertyName]; // 'userName' -> 'name'
+            }
+
+            // 如果没有映射 (例如 'email')，则返回属性名自身
+            return $propertyName;
+        }
+
+        // 方案二：实现 User::whereUserName('value')
+        if (str_starts_with($method, 'where')) {
+            // 'whereUserName' -> 'userName'
+            $propertyName = lcfirst(substr($method, 5));
+
+            if (isset($metadata['mappings'][$propertyName])) {
+                // 找到了映射: 'userName' -> 'name'
+                $columnName = $metadata['mappings'][$propertyName];
+
+                // 需要将 'name' 转换为 'Name' 以便调用 Eloquent 的魔术方法
+                $studlyColumn = Str::studly($columnName); // 'name' -> 'Name'
+                $newMethod = 'where' . $studlyColumn; // 'where' + 'Name' -> 'whereName'
+
+                // 将调用转发给 Eloquent 的原生 __callStatic，
+                // 就像我们调用了 User::whereName(...) 一样
+                return parent::__callStatic($newMethod, $parameters);
+            }
+        }
+
+        // 如果以上都不是，则回退到 Eloquent 的默认静态方法 (例如 find, create, etc.)
+        return parent::__callStatic($method, $parameters);
+    }
     /**
      * 为数组/JSON序列化准备日期。
      */
