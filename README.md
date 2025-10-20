@@ -72,39 +72,102 @@ cp .env.example .env
 php -S localhost:8000
 ```
 
+### 3. Web 服务器配置
 
+#### Apache 配置
 
-### 2. 目录结构
+项目已包含 `.htaccess` 文件，支持 Apache 服务器的 URL 重写。
+
+#### Nginx 配置
+
+对于 Nginx 服务器，请在您的 Nginx 配置文件中添加以下 location 配置：
+
+```nginx
+location / {
+    try_files /public$uri /index.php?s=$uri&$args;
+}
+```
+
+**注意事项：**
+- 确保您的 Nginx 配置指向项目根目录
+- `try_files` 指令会首先尝试访问 `/public` 目录下的静态资源，然后回退到 `index.php`
+- 请根据您的 PHP-FPM 配置调整 `fastcgi_pass` 路径
+- 确保已安装并启用 PHP-FPM
+
+### 4. 目录结构
 
 
 
 ```
 .
-├── app/                  # 应用程序核心代码
-│   ├── Controller/       # 控制器
-│   ├── Middleware/       # 中间件
-│   ├── Models/           # Eloquent 模型
-│   ├── Providers/        # 服务提供者
-│   ├── Subscribers/      # 事件订阅者
-│   └── View/             # Blade 视图文件
-├── cache/                # 框架缓存（路由、视图、订阅者）
-├── config/               # 配置文件 (database.php, providers.php)
-├── kernel/               # 框架内核代码
-│   ├── Attribute/        # 所有的 PHP Attributes
-│   ├── Database/         # 数据库扩展 (BaseModel 和 Traits)
-│   ├── Exception/        # 异常处理
-│   ├── Middleware/       # 中间件核心 (Pipeline)
-│   ├── Request/          # 请求处理
-│   ├── Response/         # 响应处理 (JsonResponse, ViewResponse)
-│   ├── Routing/          # 路由核心 (Router, RouteCollector)
-│   └── Validation/       # 验证器工厂
-├── lang/                 # 多语言文件 (zh_CN, en)
-├── public/               # Web 服务器入口（包含静态资源）
-├── vendor/               # Composer 依赖
-├── .env                  # 环境变量
-├── .htaccess             # Apache 配置
-└── index.php             # 应用程序入口文件
+├── app/                          # 应用程序核心代码
+│   ├── Console/                  # 控制台命令
+│   │   └── Commands/             # 命令类实现
+│   ├── Controller/               # HTTP 控制器
+│   │   └── admin/                # 管理后台控制器
+│   ├── Dto/                      # 数据传输对象
+│   ├── Middleware/               # 自定义中间件
+│   ├── Models/                   # Eloquent ORM 模型
+│   ├── Providers/                # 应用服务提供者
+│   ├── Subscribers/              # 事件订阅者
+│   │   ├── Cors/                 # CORS 处理订阅者
+│   │   ├── DatabaseLogger/       # 数据库日志订阅者
+│   │   ├── Demo/                 # 演示订阅者
+│   │   └── SubscriberCollector/  # 订阅者收集器
+│   └── View/                     # Blade 模板视图
+│       ├── index/                # 首页视图
+│       └── layouts/              # 布局模板
+├── cache/                        # 框架缓存目录
+│   └── views/                    # 视图缓存
+├── config/                       # 应用配置文件
+├── kernel/                       # 框架内核代码
+│   ├── Attribute/                # PHP Attributes 定义
+│   │   ├── Database/             # 数据库相关注解
+│   │   ├── Http/                 # HTTP 路由注解
+│   │   ├── Middleware/           # 中间件注解
+│   │   ├── ModelAccessor/        # 模型访问器注解
+│   │   └── Validation/           # 验证注解
+│   ├── Container/                # 依赖注入容器
+│   ├── Database/                 # 数据库扩展
+│   │   └── Traits/               # 数据库特性
+│   ├── Events/                   # 事件系统
+│   ├── Exception/                # 异常处理
+│   ├── Helpers/                  # 辅助工具
+│   ├── Middleware/               # 中间件核心
+│   ├── Providers/                # 内核服务提供者
+│   ├── Request/                  # HTTP 请求处理
+│   ├── Response/                 # HTTP 响应处理
+│   ├── Routing/                  # 路由系统
+│   ├── Subscribers/              # 内核事件订阅者
+│   └── Validation/               # 验证器
+├── lang/                         # 多语言文件
+│   ├── en/                       # 英文语言包
+│   └── zh_CN/                    # 中文简体语言包
+├── logs/                         # 应用日志目录
+├── public/                       # Web 静态资源目录
+├── vendor/                       # Composer 依赖包
+├── .env                          # 环境变量配置
+├── .env.example                  # 环境变量示例
+├── .gitignore                    # Git 忽略文件
+├── .htaccess                     # Apache URL 重写配置
+├── CLAUDE.md                     # Claude AI 助手配置
+├── composer.json                 # Composer 依赖配置
+├── jnm                           # 控制台命令入口脚本
+├── listenDir                     # 文件监听工具 (Go 编写)
+├── index.php                     # 应用程序入口文件
+└── README.md                     # 项目说明文档
 ```
+
+**目录说明：**
+
+- **`app/`**: 应用程序的主要代码目录，包含所有业务逻辑
+- **`kernel/`**: 框架核心代码，提供基础功能和组件
+- **`config/`**: 应用配置文件，如数据库连接、服务提供者注册等
+- **`cache/`**: 框架运行时生成的缓存文件，包括路由缓存、视图缓存等
+- **`lang/`**: 多语言支持文件，支持国际化
+- **`logs/`**: 应用程序运行日志存储目录
+- **`public/`**: Web 静态资源目录，可通过浏览器直接访问
+- **`vendor/`**: Composer 管理的第三方依赖包
 
 
 
