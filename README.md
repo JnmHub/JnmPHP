@@ -175,10 +175,16 @@ location / {
 
 ## 辅助工具
 
-listenDir 是一个由Go编写的一个小工具，可以监听某一个文件夹内的所有文件的变化，如果发生变化则执行指定的cmd命令
+`listenDir` 是一个由`Go`编写的一个小工具，可以监听某一个文件夹内的所有文件的变化，如果发生变化则执行指定的`cmd`命令
+- `listenDir-darwin-amd64` 苹果Inter处理器
+- `listenDir-darwin-arm64` 苹果M处理器
+- `listenDir-linux-amd64`  linux
+- `listenDir-windows-amd64.exe` windows
+ ##### 请选择对应系统版本下载～
 例：
+
 ```bash
- ./listenDir -dir "app/Models" -cmd "php jnm ide-helper:models"
+ ./listenDir-darwin-arm64 -dir "app/Models" -cmd "php jnm ide-helper:models"
 ```
 - -dir 指定要监听的文件夹
 - -cmd 需要执行的命令
