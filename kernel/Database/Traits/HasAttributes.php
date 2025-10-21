@@ -31,11 +31,14 @@ trait HasAttributes
                 'HasOne' => $this->hasOne($config->related, $config->foreignKey, $config->localKey),
                 'HasMany' => $this->hasMany($config->related, $config->foreignKey, $config->localKey),
                 'BelongsTo' => $this->belongsTo($config->related, $config->foreignKey, $config->ownerKey),
+                'HasManyThrough' => $this->hasManyThrough($config->related, $config->through, $config->firstKey, $config->secondKey, $config->localKey, $config->secondLocalKey),
+                'MorphMany' => $this->morphMany($config->related, $config->name, $config->type, $config->id, $config->localKey),
+                'MorphTo' => $this->morphTo($config->name, $config->type, $config->id, $config->ownerKey),
                 default => null,
             };
 
             // HasOne 和 BelongsTo 返回单个模型实例, 其他返回集合
-            $result = in_array($relationMeta['type'], ['HasOne', 'BelongsTo'])
+            $result = in_array($relationMeta['type'], ['HasOne', 'BelongsTo','MorphTo'])
                 ? $relationQuery->first()
                 : $relationQuery->get();
 
@@ -92,6 +95,9 @@ trait HasAttributes
                 'HasOne' => $this->hasOne($config->related, $config->foreignKey, $config->localKey),
                 'HasMany' => $this->hasMany($config->related, $config->foreignKey, $config->localKey),
                 'BelongsTo' => $this->belongsTo($config->related, $config->foreignKey, $config->ownerKey),
+                'HasManyThrough' => $this->hasManyThrough($config->related, $config->through, $config->firstKey, $config->secondKey, $config->localKey, $config->secondLocalKey),
+                'MorphMany' => $this->morphMany($config->related, $config->name, $config->type, $config->id, $config->localKey),
+                'MorphTo' => $this->morphTo($config->name, $config->type, $config->id, $config->ownerKey),
             };
         }
 

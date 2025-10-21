@@ -5,7 +5,10 @@ namespace Kernel\Database\Traits;
 use Kernel\Attribute\Database\BelongsTo;
 use Kernel\Attribute\Database\BelongsToMany;
 use Kernel\Attribute\Database\HasMany;
+use Kernel\Attribute\Database\HasManyThrough;
 use Kernel\Attribute\Database\HasOne;
+use Kernel\Attribute\Database\MorphMany;
+use Kernel\Attribute\Database\MorphTo;
 use Kernel\Attribute\Database\TableField;
 use Kernel\Attribute\ModelAccessor\Accessor;
 use Kernel\Attribute\ModelAccessor\Mutator;
@@ -85,6 +88,9 @@ trait HasMetadata
                 BelongsTo::class => 'BelongsTo',
                 BelongsToMany::class => 'BelongsToMany',
                 HasOne::class => 'HasOne',
+                HasManyThrough::class => 'HasManyThrough',
+                MorphMany::class  => 'MorphMany',
+                MorphTo::class  => 'MorphTo',
             ];
 
             foreach ($relationConfigs as $attributeClass => $type) {
