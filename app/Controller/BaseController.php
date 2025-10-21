@@ -5,9 +5,15 @@ namespace App\Controller;
 use Kernel\Exception\HttpException;
 use Kernel\Response\FileResponse;
 use Kernel\Response\ViewResponse;
+use Psr\Log\LoggerInterface;
 
 class BaseController
 {
+    protected LoggerInterface $logger;
+    public function __construct(LoggerInterface $logger)
+    {
+        $this->logger = $logger;
+    }
     /**
      * 准备一个视图响应.
      *

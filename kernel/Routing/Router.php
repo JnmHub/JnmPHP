@@ -4,7 +4,7 @@ namespace Kernel\Routing;
 use Illuminate\Database\Eloquent\Model;
 use Kernel\Attribute\Http\PathVariable;
 use Kernel\Attribute\Http\RequestBody;
-use Kernel\Container\Container;
+use Kernel\Container\KernelContainer;
 use Kernel\Events\EventManager;
 use Kernel\Exception\HttpException;
 use Kernel\Middleware\MiddlewareManager;
@@ -51,7 +51,7 @@ class Router
                 // 提取命名捕获组
                 $params = array_filter($matches, fn($k) => !is_numeric($k), ARRAY_FILTER_USE_KEY);  // 获取所有的请求的参数
                 $params = array_map(['Kernel\Helpers\Str', 'urldecode'], $params);
-                $container = Container::getInstance();
+                $container = KernelContainer::getInstance();
                 $controller = $container->make($route['controller']);
                 $action = $route['action'];
 
@@ -91,7 +91,7 @@ class Router
 
                             // 2. 只有在定义了规则的情况下才执行验证
                             if (!empty($rules)) {
-                                $factory = new ValidatorFactory();
+                                $factory = $container->make('validator');
                                 $validator = $factory->make($dataToValidate, $rules);
 
                                 // validate() 方法会在验证失败时自动抛出 ValidationException

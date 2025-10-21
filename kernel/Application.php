@@ -3,6 +3,7 @@
 namespace Kernel;
 
 use Illuminate\Container\Container;
+use Kernel\Container\KernelContainer;
 use Kernel\Request\Request;
 use Kernel\Routing\Router;
 
@@ -28,7 +29,7 @@ class Application
     private function __construct()
     {
         // 1. 初始化容器
-        $this->container = Container::getInstance();
+        $this->container = KernelContainer::getInstance();
 
         // 2. 将应用实例自身绑定到容器中，方便其他服务使用
         $this->container->instance(Application::class, $this);

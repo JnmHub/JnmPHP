@@ -16,9 +16,8 @@ class HelloWorldCommand extends Command
     protected function configure(): void
     {
         $this
-            // [!code ++] Explicitly set the command name here
+
             ->setName('app:hello-world')
-            // [!code ++]
             ->setDescription('Prints Hello World message.')
             ->setHelp('This command allows you to print a greeting message...')
             ->addArgument('name', InputArgument::OPTIONAL, 'Who do you want to greet?', 'World')

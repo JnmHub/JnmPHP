@@ -15,12 +15,10 @@ use Kernel\Database\DB;
 class ValidatorFactory
 {
     protected Factory $factory;
-
-    public function __construct()
+    public function __construct(Translator $translator)
     {
         // 1. 设置翻译器
-        $loader = new FileLoader(new Filesystem, APP_ROOT . '/lang');
-        $translator = new Translator($loader, env('APP_LOCALE',"zh_CN"));
+
         $this->factory = new Factory($translator);
 
         // 2. 【核心修正】

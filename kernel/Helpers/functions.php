@@ -1,15 +1,21 @@
 <?php
 
 
+use Illuminate\Container\Container;
+use kernel\Application;
+use Psr\Container\ContainerExceptionInterface;
+use Psr\Container\NotFoundExceptionInterface;
+
 if (!function_exists('app')) {
     /**
      * @param string|null $abstract
-     * @return \kernel\Container\Container|mixed
-     * @throws Exception
+     * @return Container|mixed
+     * @throws ContainerExceptionInterface
+     * @throws NotFoundExceptionInterface
      */
     function app(string $abstract = null)
     {
-        $container = \kernel\Application::getInstance()->getContainer();
+        $container = Application::getInstance()->getContainer();
         if (is_null($abstract)) {
             return $container;
         }
@@ -18,7 +24,6 @@ if (!function_exists('app')) {
     }
 }
 
-// [!code ++]
 if (!function_exists('e')) {
     /**
      * 对字符串进行 HTML 转义.
@@ -36,7 +41,6 @@ if (!function_exists('e')) {
         return htmlspecialchars($value, ENT_QUOTES, 'UTF-8', $doubleEncode);
     }
 }
-// [!code ++]
 if (!function_exists('env')) {
     /**
      * 获取一个环境变量的值，并进行智能类型转换。

@@ -15,7 +15,7 @@ use ReflectionUnionType;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
-use Throwable; // [!code ++]
+use Throwable;
 
 class GenerateIdeHelperCommand extends Command
 {
@@ -40,7 +40,7 @@ class GenerateIdeHelperCommand extends Command
         // 注意：APP_ROOT 已经在 jnm 文件中定义，可以直接使用
         $appNamespace = 'App\\';
         $modelBasePath = APP_ROOT . '/app/Models';
-        $outputFile = APP_ROOT . '/app/_ide_helper_models.php';
+        $outputFile = APP_ROOT . '/cache/_ide_helper_models.php';
         $baseModelClass = \Kernel\Database\BaseModel::class;
 
         // --- 属性注解常量 ---
@@ -288,14 +288,11 @@ class GenerateIdeHelperCommand extends Command
 
                 $finalOutput .= $doc;
 
-            } catch (Throwable $e) { // [!code ++] Catch Throwable for broader error handling
+            } catch (Throwable $e) {
                 $output->writeln("<error>[ERROR] 处理类 {$className} 时发生致命错误: {$e->getMessage()}</error>");
                 $output->writeln("    File: {$e->getFile()} on line {$e->getLine()}");
                 $output->writeln("    <comment>请检查该文件及其依赖项。</comment>");
-                // Optional: Output trace in verbose mode
-                // if ($output->isVerbose()) {
-                //     $output->writeln($e->getTraceAsString());
-                // }
+
             }
         }
 
@@ -311,10 +308,10 @@ class GenerateIdeHelperCommand extends Command
                 $output->writeln("\n<comment>[WARNING] 生成了文件，但是没有找到任何模型。请检查模型路径和文件。</comment>");
                 $output->writeln($outputFile);
             }
-            return Command::SUCCESS; // [!code ++] Return success code
+            return Command::SUCCESS;
         } catch (\Exception $e) {
             $output->writeln("\n<error>[FATAL] 无法写入文件 {$outputFile}: {$e->getMessage()}</error>");
-            return Command::FAILURE; // [!code ++] Return failure code
+            return Command::FAILURE;
         }
     }
 }

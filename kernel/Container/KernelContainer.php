@@ -4,7 +4,7 @@ namespace Kernel\Container;
 
 use Illuminate\Container\Container as IlluminateContainer;
 
-class Container
+class KernelContainer
 {
     private static ?IlluminateContainer $instance = null;
 

@@ -4,11 +4,13 @@
 use App\Providers\AppServiceProvider;
 use App\Providers\DatabaseServiceProvider;
 use App\Providers\EventServiceProvider;
+use App\Providers\LogServiceProvider;
 use App\Providers\RouteServiceProvider;
 use App\Providers\ViewServiceProvider;
 
 return [
     AppServiceProvider::class,
+    LogServiceProvider::class,
     EventServiceProvider::class,
     DatabaseServiceProvider::class,
     RouteServiceProvider::class,

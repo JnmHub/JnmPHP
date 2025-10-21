@@ -2,63 +2,102 @@
 
 namespace Kernel\Exception;
 
+use ErrorException;
 use Illuminate\Validation\ValidationException;
 use Kernel\Response\JsonResponse;
+use Psr\Log\LoggerInterface;
 use Throwable;
 
-// Throwable 是 Error 和 Exception 的父接口
 
 class Handler
 {
-    /**
-     * 注册异常和错误处理器
-     */
-    public static function register(): void
-    {
-        // 当一个异常未被捕获时，会调用此函数
-        set_exception_handler([self::class, 'handleException']);
 
-        // 当代码中出现错误（如E_WARNING, E_NOTICE等）时，会调用此函数
-        // 我们将所有错误都转换为 ErrorException，然后由 handleException 统一处理
-        set_error_handler(function ($severity, $message, $file, $line) {
-            if (!(error_reporting() & $severity)) {
-                // This error code is not included in error_reporting
-                return;
-            }
-            throw new \ErrorException($message, 0, $severity, $file, $line);
-        });
+    protected LoggerInterface $logger;
+
+
+
+    /**
+     * 构造函数注入 Logger
+     * @param LoggerInterface $logger
+     */
+    public function __construct(LoggerInterface $logger)
+    {
+        $this->logger = $logger;
     }
 
     /**
-     * 统一处理所有异常和错误
+     * 新增：处理 Error (用于 set_error_handler)
+     *
+     * @param $severity
+     * @param $message
+     * @param $file
+     * @param $line
+     * @throws ErrorException
+     */
+    public function handleError($severity, $message, $file, $line): void
+    {
+        if (!(error_reporting() & $severity)) {
+            return;
+        }
+        // 将 PHP Error 转换为异常，抛出
+        // 这将被下面的 handleException 捕获
+        throw new ErrorException($message, 0, $severity, $file, $line);
+    }
+
+    /**
+     * 统一处理所有异常 (用于 set_exception_handler)
      * @param Throwable $e
      */
-    public static function handleException(Throwable $e): void
+    public function handleException(Throwable $e): void
     {
         if (ob_get_level()) {
             ob_end_clean();
         }
 
-        // ✅ 新增逻辑：处理自定义的 HttpException
+
+        if (!$this->shouldntReport($e)) {
+            $this->logger->error($e->getMessage(), [
+                'exception' => get_class($e),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+            ]);
+        }
+
+        // 2. 渲染响应
         if ($e instanceof HttpException) {
             http_response_code($e->statusCode);
             foreach ($e->headers as $name => $value) {
                 header($name . ': ' . $value);
             }
-            self::renderJsonError($e,$e->statusCode);
+            self::renderJsonError($e, $e->statusCode);
             return;
         }
-        // --- 新增：捕获验证异常 ---
+
         if ($e instanceof ValidationException) {
-            // 422 Unprocessable Entity
             http_response_code(422);
-            // 使用你的 JsonResponse 返回一个包含所有错误信息的 JSON
             JsonResponse::error('Validation Failed', 422, $e->errors())->send();
-//            self::renderDevError($e,500);
             return;
         }
+
+        // 500 错误
         http_response_code(500);
-        self::renderDevError($e,500);
+
+        // 根据 DEBUG 模式选择渲染
+        if (defined('DEBUG') && DEBUG) {
+            self::renderDevError($e, 500); // 使用你写的 static 方法
+        } else {
+            self::renderProdError(); // 使用你写的 static 方法
+            // 生产环境下也可以额外返回JSON
+            // JsonResponse::error('Server Error', 500)->send();
+        }
+    }
+
+    /**
+     * 帮助函数：判断是否需要报告为 Error 级别
+     */
+    protected function shouldntReport(Throwable $e): bool
+    {
+        return $e instanceof HttpException || $e instanceof ValidationException;
     }
 
     /**
@@ -66,7 +105,7 @@ class Handler
      * 渲染开发环境下的错误页面
      * @param Throwable $e
      */
-    private static function renderDevError(Throwable $e,int $code): void
+    private static function renderDevError(Throwable $e, int $code): void
     {
         echo '<!DOCTYPE html>';
         echo '<html lang="en">';
@@ -124,7 +163,8 @@ class Handler
         echo '</body>';
         echo '</html>';
     }
-    private static function renderJsonError(Throwable $e,int $code): void
+
+    private static function renderJsonError(Throwable $e, int $code): void
     {
         JsonResponse::error(message: $e->getMessage(), code: $code)->send();
     }

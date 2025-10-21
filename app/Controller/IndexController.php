@@ -3,6 +3,7 @@ namespace App\Controller;
 
 use App\Dto\Department;
 use App\Models\Product;
+use App\Models\Tag;
 use App\Models\User;
 use Kernel\Attribute\Http\Get;
 use Kernel\Attribute\Http\PathVariable;
@@ -10,6 +11,7 @@ use Kernel\Attribute\Http\Post;
 use Kernel\Attribute\Http\RequestBody;
 use Kernel\Attribute\Http\RoutePrefix;
 use Kernel\Attribute\Middleware\Middleware;
+use Kernel\Exception\HttpException;
 use Kernel\Request\Request;
 use Kernel\Response\JsonResponse;
 
@@ -19,6 +21,7 @@ class IndexController extends BaseController
     #[Get('/')]
     public function indexView()
     {
+
         $user = new User();
         $user->setId("111");
         $products = [
