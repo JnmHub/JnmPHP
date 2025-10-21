@@ -16,11 +16,12 @@ class EventServiceProvider extends ServiceProvider
     public function boot(): void
     {
         // 将 index.php 中的订阅者加载逻辑移到这里
-        $eventManager = $this->container->make(EventManager::class);
+//        $eventManager = $this->container->make(EventManager::class);
         $subscriberClasses = SubscriberCollector::run();
 
         foreach ($subscriberClasses as $class) {
-            $subscriber = new $class($eventManager);
+//            $subscriber = new $class($eventManager);
+            $subscriber = $this->container->make($class);
             $subscriber->beforeSubscribe();
             $subscriber->subscribe();
             $subscriber->afterSubscribe();
