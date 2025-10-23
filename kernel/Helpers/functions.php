@@ -5,6 +5,25 @@ use Illuminate\Container\Container;
 use kernel\Application;
 use Psr\Container\ContainerExceptionInterface;
 use Psr\Container\NotFoundExceptionInterface;
+if (!function_exists('config')) {
+    /**
+     * 获取指定的配置项
+     *
+     * @param string|null $key
+     * @param mixed $default
+     * @return mixed
+     */
+    function config(string $key = null, mixed $default = null): mixed
+    {
+        $configRepo = app(ConfigRepository::class);
+
+        if (is_null($key)) {
+            return $configRepo;
+        }
+
+        return $configRepo->get($key, $default);
+    }
+}
 
 if (!function_exists('app')) {
     /**
