@@ -25,7 +25,7 @@ class IndexController extends BaseController
      * 对应路由: POST /submit-data
      *
      * @param Request $request 框架会自动注入 Request 对象
-     * @return array
+     * @return ViewResponse
      */
     #[Post('/submit-data')]
     #[Middleware('CSRF')]

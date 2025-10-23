@@ -14,6 +14,6 @@ class DatabaseServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
-        DB::init();
+        DB::init($this->container);
     }
 }
