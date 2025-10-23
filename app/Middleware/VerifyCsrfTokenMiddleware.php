@@ -69,7 +69,7 @@ class VerifyCsrfTokenMiddleware implements MiddlewareInterface
     {
         // 1. 从 Session 获取 Token
         $sessionToken = $this->session->token();
-
+        // TODO 校验是否过期，或者 CSRF 不校验过期
         // 2. 从请求体 (POST 数据) 获取 Token
         $requestToken = $request->post['_token'] ?? null;
 

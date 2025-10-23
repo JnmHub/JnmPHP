@@ -1,108 +1,72 @@
 <?php
-
 namespace Kernel\Session;
 
-use Kernel\Container\KernelContainer;
+use Illuminate\Contracts\Container\Container;
+use Kernel\Session\Drivers\NativeSessionDriver;
+use Kernel\Session\Drivers\DatabaseSessionDriver;
+//use Kernel\Session\Drivers\RedisSessionDriver;
 
+/**
+ * Class SessionManager
+ *
+ * 会话调度管理器，负责根据配置选择对应驱动。
+ * 通过 __call 代理所有方法到具体驱动。
+ */
 class SessionManager
 {
-    protected bool $started = false;
-    protected array $config = [];
+    protected mixed $driver;
+    protected mixed $app;
 
-    public function __construct()
+    public function __construct(Container $app)
     {
-        $this->config = config('session');
-    }
+        $this->app = $app;
+        $driverName = config('session.driver', 'native');
 
-    public function start(): bool
-    {
-        if ($this->started) {
-            return true;
+        switch ($driverName) {
+            case 'database':
+                if (class_exists(DatabaseSessionDriver::class)) {
+                    $this->driver = new DatabaseSessionDriver();
+                } else {
+                    throw new \RuntimeException("DatabaseSessionDriver not found.");
+                }
+                break;
+//            case 'redis':
+//                if (class_exists(RedisSessionDriver::class)) {
+//                    $this->driver = new RedisSessionDriver($app);
+//                } else {
+//                    throw new \RuntimeException("RedisSessionDriver not found.");
+//                }
+//                break;
+
+            default:
+                $this->driver = new NativeSessionDriver();
         }
+    }
 
-        if (session_status() === PHP_SESSION_ACTIVE) {
-            return $this->started = true;
+    /**
+     * 启动 session
+     */
+    public function start(): void
+    {
+        $this->driver->start();
+    }
+
+    /**
+     * 获取驱动实例
+     */
+    public function driver(): SessionDriverInterface
+    {
+        return $this->driver;
+    }
+
+    /**
+     * 代理调用具体驱动的方法
+     */
+    public function __call($method, $arguments)
+    {
+        if (!method_exists($this->driver, $method)) {
+            throw new \BadMethodCallException("Method {$method} not found in session driver.");
         }
-
-        $options = [
-            'lifetime' => $this->config['lifetime'] * 60,
-            'path' => $this->config['path'],
-            'domain' => $this->config['domain'],
-            'secure' => $this->config['secure'],
-            'httponly' => $this->config['http_only'],
-            'samesite' => $this->config['same_site']
-        ];
-
-        session_name($this->config['cookie']);
-        session_set_cookie_params($options);
-
-        if (session_start()) {
-            return $this->started = true;
-        }
-
-        return false;
-    }
-
-    /**
-     * 获取 Session 中的值
-     */
-    public function get(string $key, $default = null): mixed
-    {
-        $this->start();
-        return $_SESSION[$key] ?? $default;
-    }
-
-    /**
-     * 设置 Session 值
-     */
-    public function set(string $key, $value): void
-    {
-        $this->start();
-        $_SESSION[$key] = $value;
-    }
-
-    /**
-     * 检查是否存在
-     */
-    public function has(string $key): bool
-    {
-        $this->start();
-        return isset($_SESSION[$key]);
-    }
-
-    /**
-     * 删除 Session 值
-     */
-    public function forget(string $key): void
-    {
-        $this->start();
-        unset($_SESSION[$key]);
-    }
-
-    /**
-     * 获取并存储 CSRF Token
-     */
-    public function token(): string
-    {
-        $this->start();
-        if (!$this->has('_token')) {
-            $this->regenerateToken();
-        }
-        return $this->get('_token');
-    }
-
-    /**
-     * 重新生成 CSRF Token
-     */
-    public function regenerateToken(): string
-    {
-        $token = bin2hex(random_bytes(32));
-        $this->set('_token', $token);
-        return $token;
-    }
-
-    public function isStarted(): bool
-    {
-        return $this->started;
+        return $this->driver->$method(...$arguments);
     }
 }

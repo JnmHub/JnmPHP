@@ -1,71 +1,110 @@
 <?php
 
 return [
+
     /*
     |--------------------------------------------------------------------------
-    | 默认 Session 驱动
+    | 默认会话驱动
     |--------------------------------------------------------------------------
     |
-    | 目前我们只支持 'native' (PHP 原生 session)。
+    | 可选项：
+    |   - native   使用 PHP 自带的 session 存储机制（默认）
+    |   - database 将会话数据存储在数据库中（表结构见下）
+    |   - redis    使用 Redis 存储 session，适用于分布式或高并发环境
     |
     */
+
     'driver' => env('SESSION_DRIVER', 'native'),
 
     /*
     |--------------------------------------------------------------------------
-    | Session 生命周期
+    | Session 生命周期（分钟）
     |--------------------------------------------------------------------------
     |
-    | session cookie 的有效分钟数。
+    | 会话存活时间（分钟数）。超时后会自动清理。
     |
     */
-    'lifetime' => (int) env('SESSION_LIFETIME', 120),
+
+    'lifetime' => env('SESSION_LIFETIME', 120),
 
     /*
     |--------------------------------------------------------------------------
     | Session Cookie 名称
     |--------------------------------------------------------------------------
+    |
+    | 用于浏览器中存储 Session ID 的 cookie 名称。
+    |
     */
+
     'cookie' => env('SESSION_COOKIE', 'jnm_session'),
 
     /*
     |--------------------------------------------------------------------------
-    | Session Cookie 路径
+    | Session 作用域路径
     |--------------------------------------------------------------------------
+    |
+    | 默认对整个网站生效，可按需限制路径范围。
+    |
     */
-    'path' => env('SESSION_PATH', '/'),
+
+    'path' => '/',
 
     /*
     |--------------------------------------------------------------------------
-    | Session Cookie 域
+    | Session Domain 域名
     |--------------------------------------------------------------------------
+    |
+    | 支持跨子域共享 Session，例如 .jnm.ink。
+    |
     */
+
     'domain' => env('SESSION_DOMAIN', null),
 
     /*
     |--------------------------------------------------------------------------
-    | 仅限 HTTPS
+    | Secure 与 HttpOnly
     |--------------------------------------------------------------------------
+    |
+    | 是否仅在 HTTPS 下传输；HttpOnly 可防止 JS 访问。
+    |
     */
-    'secure' => (bool) env('SESSION_SECURE_COOKIE', false),
+
+    'secure' => env('SESSION_SECURE_COOKIE', false),
+    'http_only' => true,
 
     /*
     |--------------------------------------------------------------------------
-    | 仅限 HTTP
+    | 数据库存储设置（database 驱动）
     |--------------------------------------------------------------------------
     |
-    | 阻止 JavaScript 访问 session cookie。
+    | 如果使用 database 驱动，需要先创建一张 sessions 表：
+    |
+    | CREATE TABLE sessions (
+    |   id VARCHAR(64) PRIMARY KEY,
+    |   user_id INT NULL,
+    |   payload TEXT NOT NULL,
+    |   last_activity INT NOT NULL
+    | );
     |
     */
-    'http_only' => (bool) env('SESSION_HTTP_ONLY', true),
+
+    'database' => [
+        'connection' => env('DB_CONNECTION', 'default'),
+        'table' => 'sessions',
+    ],
 
     /*
     |--------------------------------------------------------------------------
-    | SameSite 策略
+    | Redis 存储设置（redis 驱动）
     |--------------------------------------------------------------------------
     |
-    | 可选 'lax', 'strict', 'none'
+    | Redis 模式高并发性能最佳，可自定义前缀与过期时间。
     |
     */
-    'same_site' => env('SESSION_SAME_SITE', 'lax'),
+
+    'redis' => [
+        'connection' => env('REDIS_CONNECTION', 'default'),
+        'prefix' => env('SESSION_REDIS_PREFIX', 'session:'),
+        'lifetime' => env('SESSION_REDIS_LIFETIME', 1200),
+    ],
 ];

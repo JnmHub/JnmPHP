@@ -3,6 +3,7 @@
 namespace Kernel\Database;
 use Illuminate\Container\Container;
 use Illuminate\Database\Capsule\Manager as Capsule;
+use Illuminate\Database\Query\Builder;
 
 class DB
 {
@@ -24,5 +25,25 @@ class DB
     public static function getCapsule(): ?Capsule
     {
         return self::$capsule;
+    }
+
+    public static function table(string $table): Builder
+    {
+        return self::$capsule->table($table);
+    }
+
+    public static function select(string $query, array $bindings = []): array
+    {
+        return self::$capsule->getConnection()->select($query, $bindings);
+    }
+
+    public static function insert(array $values, string $table): bool
+    {
+        return self::$capsule->table($table)->insert($values);
+    }
+
+    public static function updateOrInsert(array $attributes, array $values, string $table): bool
+    {
+        return self::$capsule->table($table)->updateOrInsert($attributes, $values);
     }
 }
