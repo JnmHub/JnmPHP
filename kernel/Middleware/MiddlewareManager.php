@@ -4,6 +4,8 @@ namespace Kernel\Middleware;
 
 use App\Middleware\LogRequestMiddleware;
 use App\Middleware\StartSessionMiddleware;
+use App\Middleware\VerifyCsrfTokenMiddleware;
+
 class MiddlewareManager
 {
     /**
@@ -12,7 +14,6 @@ class MiddlewareManager
      * @var array
      */
     protected array $globalMiddleware = [
-        \App\Middleware\LogRequestMiddleware::class,
         LogRequestMiddleware::class,
         StartSessionMiddleware::class,
     ];

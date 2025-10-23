@@ -33,6 +33,7 @@ class Application
 
         // 2. 将应用实例自身绑定到容器中，方便其他服务使用
         $this->container->instance(Application::class, $this);
+        $this->container->alias(Application::class, 'app');;
     }
 
     /**
