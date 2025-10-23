@@ -75,7 +75,7 @@ class Pipeline
                     throw new RuntimeException("中间件类不存在: {$pipe}");
                 }
 
-                $middleware = new $pipe();
+                $middleware = app($pipe);
 
                 if (!($middleware instanceof MiddlewareInterface)) {
                     throw new RuntimeException("中间件 {$pipe} 必须实现 MiddlewareInterface 接口");
