@@ -25,7 +25,7 @@ class MiddlewareManager
      */
     protected array $routeMiddlewareAliases = [
         'auth' => \App\Middleware\AuthMiddleware::class,
-        'log' => \App\Middleware\LogRequestMiddleware::class,
+        'log' => LogRequestMiddleware::class,
         'admin' => \App\Middleware\AdminCheckMiddleware::class,
     ];
 
