@@ -7,6 +7,7 @@ use App\Providers\DatabaseServiceProvider;
 use App\Providers\EventServiceProvider;
 use App\Providers\LogServiceProvider;
 use App\Providers\RouteServiceProvider;
+use App\Providers\SessionServiceProvider;
 use App\Providers\ViewServiceProvider;
 
 return [
@@ -17,4 +18,5 @@ return [
     DatabaseServiceProvider::class,
     RouteServiceProvider::class,
     ViewServiceProvider::class,
+    SessionServiceProvider::class,
 ];

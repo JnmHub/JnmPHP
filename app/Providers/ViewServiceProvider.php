@@ -47,4 +47,9 @@ class ViewServiceProvider extends ServiceProvider
         // 别名，方便在 ViewResponse 中获取
         $this->container->singleton('view', fn() => $viewFactory);
     }
+    public function boot():void
+    {
+        $session = $this->container->make(\Kernel\Session\SessionManager::class); //
+        $this->container->make('view')->share('_token', $session->token()); // <-- 新增这一行
+    }
 }

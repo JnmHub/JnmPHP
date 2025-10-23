@@ -14,11 +14,50 @@ use Kernel\Attribute\Middleware\Middleware;
 use Kernel\Exception\HttpException;
 use Kernel\Request\Request;
 use Kernel\Response\JsonResponse;
+use Kernel\Response\ViewResponse;
 
 #[RoutePrefix('/')]
 class IndexController extends BaseController
 {
+
+    /**
+     * 测试 CSRF 表单提交
+     * 对应路由: POST /submit-data
+     *
+     * @param Request $request 框架会自动注入 Request 对象
+     * @return array
+     */
+    #[Post('/submit-data')]
+    #[Middleware('CSRF')]
+    public function submitData(Request $request): ViewResponse
+    {
+        // 1. 您不需要在这里写任何 CSRF 验证代码。
+        // 2. 因为 `VerifyCsrfTokenMiddleware` 是全局中间件，
+        //    它在执行此方法 *之前* 就已经自动验证了 `_token`。
+        // 3. 如果 `_token` 无效，中间件会抛出 419 异常，根本不会执行到这里。
+
+        // 4. 从 Request 对象中获取 POST 表单数据
+        $body = $request->post; //
+        $data = $body['data'] ?? '没有提交 data 字段';
+
+        // 5. 返回一个 JSON 响应，证明成功
+        $user = new User();
+        $user->setId("111");
+        $products = [
+            ['name' => User::_UserName(), 'price' => 100],
+            ['name' => $user->posts, 'price' => 200],
+        ];
+
+        // 关键改动：
+        // 将 'index/index' 修改为 'index.index'
+        // ViewResponse 会自动寻找 .blade.php 文件
+        return $this->view('index.index', [
+            'name'     => $data,
+            'products' => $products
+        ]);
+    }
     #[Get('/')]
+    #[Middleware('CSRF')]
     public function indexView()
     {
 
@@ -104,7 +143,6 @@ class IndexController extends BaseController
     public function getUserWithPosts(int $id)
     {
         $user = User::getById($id);
-        echo $user->userName;
 
 
         // ✅ 就像访问普通属性一样，触发关联关系加载！

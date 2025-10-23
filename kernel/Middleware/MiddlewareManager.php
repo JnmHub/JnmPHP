@@ -27,6 +27,8 @@ class MiddlewareManager
         'auth' => \App\Middleware\AuthMiddleware::class,
         'log' => LogRequestMiddleware::class,
         'admin' => \App\Middleware\AdminCheckMiddleware::class,
+        'CSRF' => VerifyCsrfTokenMiddleware::class,
+
     ];
 
     // Getter for global middleware

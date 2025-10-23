@@ -16,7 +16,20 @@
     <li>{{ $product['name'] }} - ￥{{ $product['price'] }}</li>
     @endforeach
 </ul>
+<form action="/submit-data" method="POST">
 
+    {{-- 使用辅助函数 (推荐) --}}
+    {!! csrf_field() !!}
+
+    {{-- 或者直接使用共享变量 --}}
+{{--    <input type="hidden" name="_token" value="{{ $_token }}">--}}
+
+    <label>
+        数据:
+        <input type="text" name="data">
+    </label>
+    <button type="submit">提交</button>
+</form>
 {{-- 5. 测试翻译功能 (它会使用你 AppServiceProvider 中配置的翻译服务) --}}
 <p>
     翻译测试: @lang('validation.accepted', ['attribute' => '条款'])
