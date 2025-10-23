@@ -5,6 +5,25 @@ use Illuminate\Container\Container;
 use kernel\Application;
 use Psr\Container\ContainerExceptionInterface;
 use Psr\Container\NotFoundExceptionInterface;
+if (!function_exists('base_path')) {
+    /**
+     * 获取项目根目录的绝对路径
+     *
+     * @param string $path
+     * @return string
+     */
+    function base_path(string $path = ''): string
+    {
+        // APP_ROOT 是在 index.php 和 jnm 脚本中定义的
+        if (empty($path)) {
+            return APP_ROOT;
+        }
+
+        // 确保路径分隔符正确 (e.g., config -> /config)
+        return APP_ROOT . DIRECTORY_SEPARATOR . ltrim($path, '/\\');
+    }
+}
+
 if (!function_exists('config')) {
     /**
      * 获取指定的配置项
