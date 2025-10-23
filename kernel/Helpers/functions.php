@@ -3,8 +3,44 @@
 
 use Illuminate\Container\Container;
 use kernel\Application;
+use Kernel\Config\ConfigRepository;
+use Kernel\Session\SessionManager;
 use Psr\Container\ContainerExceptionInterface;
 use Psr\Container\NotFoundExceptionInterface;
+if (!function_exists('session')) {
+    /**
+     * 获取 session 实例或 session 中的值
+     */
+    function session($key = null, $default = null)
+    {
+        $session = app(SessionManager::class);
+        if (is_null($key)) {
+            return $session;
+        }
+        return $session->get($key, $default);
+    }
+}
+
+if (!function_exists('csrf_token')) {
+    /**
+     * 获取 CSRF Token
+     */
+    function csrf_token(): string
+    {
+        return session()->token();
+    }
+}
+
+if (!function_exists('csrf_field')) {
+    /**
+     * 生成包含 CSRF Token 的表单隐藏域
+     */
+    function csrf_field(): string
+    {
+        $token = csrf_token();
+        return "<input type=\"hidden\" name=\"_token\" value=\"{$token}\">";
+    }
+}
 if (!function_exists('base_path')) {
     /**
      * 获取项目根目录的绝对路径

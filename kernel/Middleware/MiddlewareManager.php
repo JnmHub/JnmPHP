@@ -2,6 +2,8 @@
 
 namespace Kernel\Middleware;
 
+use App\Middleware\LogRequestMiddleware;
+use App\Middleware\StartSessionMiddleware;
 class MiddlewareManager
 {
     /**
@@ -11,6 +13,8 @@ class MiddlewareManager
      */
     protected array $globalMiddleware = [
         \App\Middleware\LogRequestMiddleware::class,
+        LogRequestMiddleware::class,
+        StartSessionMiddleware::class,
     ];
 
     /**
