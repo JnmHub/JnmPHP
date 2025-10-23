@@ -138,11 +138,18 @@ class RouteCollector
 
         foreach ($attributes as $attribute) {
             $instance = $attribute->newInstance();
+
             foreach ($instance->middlewares as $middleware) {
-                // 如果是别名，则替换为完整的类名
-                $middlewares[] = $aliases[$middleware] ?? $middleware;
+                $resolved = $aliases[$middleware] ?? $middleware;
+
+                // 如果别名对应数组，就直接合并；否则转成数组合并
+                $middlewares = array_merge(
+                    $middlewares,
+                    is_array($resolved) ? $resolved : [$resolved]
+                );
             }
         }
+
         return $middlewares;
     }
 }
