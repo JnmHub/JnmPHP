@@ -226,4 +226,17 @@ class IndexController extends BaseController
         // 3. 将验证和填充后的模型实例返回
         return $product;
     }
+    /**
+     * 测试 DTO 接受参数
+     * 使用新的 Department Dto
+     *
+     * @param Department $department
+     * @return Department
+     */
+    #[Post('/dto_demo')]
+    public function dtoDemo(Department $department){
+        // 支持接受Dto 参数接受
+        // 自动json 序列化
+        return $department;
+    }
 }
