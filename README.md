@@ -98,23 +98,14 @@ php -S localhost:8000
 jnmphp-project/
 ├── app/                          # 应用层代码
 │   ├── Controller/               # HTTP 控制器
-│   │   └── admin/               # 管理后台控制器
 │   ├── Models/                   # Eloquent 模型
 │   ├── Middleware/               # 自定义中间件
 │   ├── Providers/                # 应用服务提供者
 │   ├── Subscribers/              # 事件订阅者
 │   ├── View/                     # Blade 视图文件
-│   │   ├── index/               # 页面视图
-│   │   └── layouts/             # 布局模板
-│   ├── Dto/                      # 数据传输对象
 │   └── Console/                  # 控制台命令
 ├── kernel/                       # 框架核心代码
 │   ├── Attribute/                # PHP Attributes 定义
-│   │   ├── Database/             # 数据库相关注解
-│   │   ├── Http/                 # HTTP 路由注解
-│   │   ├── Middleware/           # 中间件注解
-│   │   ├── ModelAccessor/        # 模型访问器注解
-│   │   └── Validation/           # 验证注解
 │   ├── Database/                 # 数据库扩展层
 │   ├── Events/                   # 事件系统
 │   ├── Middleware/               # 中间件核心
@@ -125,18 +116,11 @@ jnmphp-project/
 │   ├── Validation/               # 验证器
 │   └── Helpers/                  # 全局辅助函数
 ├── config/                       # 应用配置
-│   └── providers.php             # 服务提供者注册
 ├── cache/                        # 框架缓存
-│   ├── routes.php               # 路由缓存
-│   ├── subscribers.php          # 事件订阅者缓存
-│   └── views/                   # 视图编译缓存
 ├── lang/                         # 多语言文件
-│   ├── en/                      # 英文语言包
-│   └── zh_CN/                   # 中文简体语言包
 ├── logs/                         # 应用日志
 ├── public/                       # 静态资源
 ├── .env                          # 环境配置
-├── .env.example                  # 环境配置示例
 ├── index.php                     # 应用入口
 ├── jnm                           # 命令行工具
 └── README.md                     # 项目文档
@@ -152,7 +136,6 @@ jnmphp-project/
 <?php
 namespace App\Controller;
 
-use App\Controller\BaseController;
 use Kernel\Attribute\Http\{Get, Post, RoutePrefix};
 use Kernel\Attribute\Http\PathVariable;
 use Kernel\Attribute\Http\RequestBody;
@@ -179,16 +162,7 @@ class UserController extends BaseController
 }
 ```
 
-**路由注解类型**：
-- `#[Get(path)]` - GET 路由
-- `#[Post(path)]` - POST 路由
-- `#[Put(path)]` - PUT 路由
-- `#[Delete(path)]` - DELETE 路由
-- `#[Route(path, methods)]` - 通用路由定义
-- `#[RoutePrefix(path)]` - 控制器级别前缀
-- `#[PathVariable(name)]` - URL 参数绑定
-- `#[RequestBody]` - JSON 请求体绑定
-- `#[Middleware('alias')]` - 中间件配置
+**详细文档**：📖 [路由系统使用指南](kernel/Routing/README.md)
 
 ### 2. 模型与数据库
 
@@ -200,14 +174,11 @@ namespace App\Models;
 
 use Kernel\Attribute\Database\TableField;
 use Kernel\Attribute\Database\{HasMany, BelongsTo};
-use Kernel\Attribute\ModelAccessor\{Accessor, Mutator};
 use Kernel\Attribute\Validation\Validate;
 use Kernel\Database\BaseModel;
 
 class User extends BaseModel
 {
-    protected $table = 'users';
-
     // 主键字段配置
     #[TableField(isPrimaryKey: true, isFillable: false, isHidden: true)]
     protected int $id;
@@ -217,46 +188,19 @@ class User extends BaseModel
     #[Validate('required|string|max:50')]
     protected string $userName;
 
-    // 密码字段，隐藏在 JSON 输出中
-    #[TableField(isFillable: false, isHidden: true)]
-    #[Validate('required|string|min:8')]
-    protected string $password;
-
     // 一对多关系：User has many Posts
     #[HasMany(related: Post::class)]
     protected array $posts;
-
-    // 访问器：获取时自动处理
-    #[Accessor]
-    public function getUserNameAccessor(?string $value): string
-    {
-        return ucfirst($value ?? '');
-    }
-
-    // 修改器：设置时自动处理
-    #[Mutator]
-    public function setPasswordMutator(string $value): string
-    {
-        return password_hash($value, PASSWORD_BCRYPT);
-    }
 }
 ```
 
-**支持的数据库注解**：
-- `#[TableField]` - 字段配置（列名、类型、验证规则等）
-- `#[HasOne]` / `#[HasMany]` - 一对/一对多关系
-- `#[BelongsTo]` - 从属关系
-- `#[BelongsToMany]` - 多对多关系
-- `#[HasManyThrough]` - 远程一对多关系
-- `#[MorphMany]` / `#[MorphTo]` - 多态关系
-- `#[Accessor]` / `#[Mutator]` - 属性访问器/修改器
+**详细文档**：📖 [数据库模型系统指南](kernel/Database/README.md)
 
 ### 3. 中间件系统
 
 创建和使用中间件保护路由：
 
 ```php
-// app/Middleware/AuthMiddleware.php
 <?php
 namespace App\Middleware;
 
@@ -274,28 +218,17 @@ class AuthMiddleware implements MiddlewareInterface
 
         return $next($request);
     }
-
-    private function validateToken(string $token): bool
-    {
-        return $token === 'Bearer valid-token';
-    }
 }
-
-// 注册中间件别名
-// kernel/Middleware/MiddlewareManager.php
-protected array $routeMiddlewareAliases = [
-    'auth' => \App\Middleware\AuthMiddleware::class,
-    'admin' => \App\Middleware\AdminMiddleware::class,
-];
 ```
 
-### 4. 响应处理
+**详细文档**：📖 [中间件开发指南](kernel/Middleware/README.md)
+
+### 4. 请求与响应处理
 
 框架支持多种响应类型：
 
 ```php
 <?php
-use App\Controller\BaseController;
 use Kernel\Response\JsonResponse;
 use Kernel\Response\ViewResponse;
 
@@ -306,7 +239,6 @@ class ResponseController extends BaseController
     public function getApiData(): array
     {
         return ['status' => 'success', 'data' => [1, 2, 3]];
-        // 自动转换为: {"code": 200, "message": "success", "data": ...}
     }
 
     // 手动 JSON 响应
@@ -314,73 +246,97 @@ class ResponseController extends BaseController
     public function getError(): JsonResponse
     {
         return JsonResponse::error('Something went wrong', 400);
-        // 返回: {"code": 400, "message": "Something went wrong", "data": null}
     }
 
     // 视图响应
     #[Get('/page')]
     public function getPage(): ViewResponse
     {
-        return $this->view('welcome', [
-            'title' => 'Welcome Page',
-            'users' => User::all()
-        ]);
+        return $this->view('welcome', ['title' => 'Welcome Page']);
     }
 }
 ```
 
-### 5. 视图与模板
+**详细文档**：📖 [请求处理指南](kernel/Request/README.md) | 📖 [响应处理指南](kernel/Response/README.md)
 
-使用 Blade 模板引擎：
+### 5. 会话管理
 
 ```php
-// app/View/layouts/app.blade.php (布局模板)
-<!DOCTYPE html>
-<html>
-<head>
-    <title>@yield('title', 'JnmPHP App')</title>
-    <meta charset="utf-8">
-</head>
-<body>
-    <header>
-        <h1>My Application</h1>
-    </header>
+// 使用会话
+session(['user_id' => $user->id]);
 
-    <main>
-        @yield('content')
-    </main>
+// 获取会话数据
+$userId = session('user_id');
 
-    <footer>
-        <p>&copy; {{ date('Y') }} My Company</p>
-    </footer>
-</body>
-</html>
-
-// app/View/index/index.blade.php (页面模板)
-@extends('layouts.app')
-
-@section('title', 'Dashboard')
-
-@section('content')
-<div class="dashboard">
-    <h2>Welcome, {{ $username }}!</h2>
-
-    @if($users->count() > 0)
-        <ul>
-            @foreach($users as $user)
-                <li>{{ $user->userName }}</li>
-            @endforeach
-        </ul>
-    @else
-        <p>@lang('messages.no_users_found')</p>
-    @endif
-</div>
-@endsection
+// 闪存消息
+session()->flash('success', '操作成功！');
 ```
 
-### 6. 控制台命令
+**详细文档**：📖 [会话管理系统指南](kernel/Session/README.md)
 
-框架提供强大的 CLI 工具：
+### 6. 验证系统
+
+```php
+class Product extends BaseModel
+{
+    #[TableField(isFillable: true)]
+    #[Validate('required|string|max:255')]
+    protected string $name;
+
+    #[TableField(isFillable: true)]
+    #[Validate('required|numeric|min:0')]
+    protected float $price;
+}
+```
+
+**详细文档**：📖 [验证系统使用指南](kernel/Validation/README.md)
+
+## 📚 详细文档导航
+
+### 🔧 核心组件文档
+
+| 组件 | 功能描述 | 详细文档 |
+|------|----------|----------|
+| **路由系统** | 基于注解的声明式路由定义和自动分发 | 📖 [路由系统指南](kernel/Routing/README.md) |
+| **请求处理** | HTTP 请求数据的提取、解析和验证 | 📖 [请求处理指南](kernel/Request/README.md) |
+| **响应处理** | 多种响应类型的统一处理和输出 | 📖 [响应处理指南](kernel/Response/README.md) |
+| **数据库模型** | 基于 Eloquent 的增强 ORM 系统 | 📖 [数据库模型系统](kernel/Database/README.md) |
+| **会话管理** | 多驱动的会话存储和管理系统 | 📖 [会话管理系统](kernel/Session/README.md) |
+| **验证系统** | 基于 Laravel 的数据验证框架 | 📖 [验证系统指南](kernel/Validation/README.md) |
+| **中间件系统** | 洋葱模型的请求处理管道 | 📖 [中间件开发指南](kernel/Middleware/README.md) |
+| **事件系统** | 应用生命周期事件管理 | 📖 [事件系统文档](kernel/Events/README.md) |
+| **事件订阅者** | 基于目录约定的事件订阅者管理 | 📖 [事件订阅者指南](kernel/Subscribers/README.md) |
+
+### 🎯 属性注解文档
+
+| 注解类型 | 功能描述 | 详细文档 |
+|----------|----------|----------|
+| **HTTP 注解** | 路由定义和请求参数绑定 | 📖 [HTTP 注解文档](kernel/Attribute/Http/README.md) |
+| **数据库注解** | 模型字段和关系定义 | 📖 [数据库注解文档](kernel/Attribute/Database/README.md) |
+| **中间件注解** | 中间件配置和应用 | 📖 [中间件注解文档](kernel/Attribute/Middleware/README.md) |
+| **验证注解** | 字段验证规则定义 | 📖 [验证注解文档](kernel/Attribute/Validation/README.md) |
+| **模型访问器** | 属性访问器和修改器定义 | 📖 [模型访问器注解文档](kernel/Attribute/ModelAccessor/README.md) |
+
+### 📖 应用层文档
+
+| 模块 | 功能描述 | 详细文档 |
+|------|----------|----------|
+| **控制器** | HTTP 请求处理和业务逻辑 | 📖 [控制器开发指南](app/Controller/README.md) |
+| **模型** | 数据模型和业务规则 | 📖 [模型开发指南](app/Models/README.md) |
+| **中间件** | 自定义中间件开发 | 📖 [中间件开发指南](app/Middleware/README.md) |
+| **服务提供者** | 服务注册和配置 | 📖 [服务提供者配置](app/Providers/README.md) |
+| **事件订阅者** | 事件监听和处理 | 📖 [事件订阅者开发](app/Subscribers/README.md) |
+
+### ⚙️ 配置和工具文档
+
+| 配置/工具 | 功能描述 | 详细文档 |
+|-----------|----------|----------|
+| **服务配置** | 框架服务提供者配置 | 📖 [服务提供者配置](config/README.md) |
+| **命令行工具** | CLI 工具和使用方法 | 📖 [CLI 工具文档](README.md#命令行工具) |
+
+## 🛠 开发工具
+
+### 命令行工具
 
 ```bash
 # 查看可用命令
@@ -393,195 +349,7 @@ php jnm ide-helper:models
 php jnm app:hello-world "JnmPHP" --uppercase
 ```
 
-## 🔧 高级功能
-
-### 1. 事件系统
-
-```php
-// 触发事件
-EventManager::dispatch('user.registered', $user);
-
-// 创建事件订阅者
-// app/Subscribers/UserEventSubscriber.php
-<?php
-namespace App\Subscribers;
-
-use Kernel\Events\SubscriberInterface;
-use App\Models\User;
-
-class UserEventSubscriber implements SubscriberInterface
-{
-    public function subscribe(): array
-    {
-        return [
-            'user.registered' => 'handleUserRegistered',
-            'user.login' => 'handleUserLogin',
-        ];
-    }
-
-    public function handleUserRegistered(User $user): void
-    {
-        // 发送欢迎邮件等
-        error_log("New user registered: " . $user->email);
-    }
-}
-```
-
-### 2. 会话管理
-
-```php
-// 使用会话
-session(['user_id' => $user->id]);
-
-// 获取会话数据
-$userId = session('user_id');
-
-// 闪存消息
-session()->flash('success', '操作成功！');
-
-// 配置会话驱动
-// .env 文件
-SESSION_DRIVER=database  # 使用数据库存储会话
-```
-
-### 3. 缓存管理
-
-框架自动缓存以下内容：
-- **路由缓存**: `cache/routes.php` - 编译后的路由定义
-- **视图缓存**: `cache/views/` - 编译后的 Blade 模板
-- **订阅者缓存**: `cache/subscribers.php` - 事件订阅者映射
-
-**手动清除缓存**：
-- 修改控制器后，删除 `cache/routes.php` 重新生成
-- 修改视图后，删除 `cache/views/` 重新编译
-- 修改订阅者后，删除 `cache/subscribers.php` 重新注册
-
-### 4. 多语言支持
-
-```php
-// lang/zh_CN/messages.php
-return [
-    'welcome' => '欢迎',
-    'no_users_found' => '未找到用户',
-    'validation.required' => ':attribute 是必填项',
-];
-
-// 在视图中使用
-@lang('messages.welcome')
-
-// 在代码中使用
-__('messages.welcome', ['name' => 'John'])
-```
-
-## 🔒 安全功能
-
-### 1. CSRF 保护
-
-```php
-// 启用 CSRF 中间件
-#[Middleware('csrf')]
-class SecureController extends BaseController
-{
-    #[Post('/process-form')]
-    public function processForm(#[RequestBody] FormData $data): array
-    {
-        // 受 CSRF 保护的表单处理
-    }
-}
-
-// 在 Blade 中包含 CSRF 字段
-<form method="POST" action="/process-form">
-    {!! csrf_field() !!}
-    <!-- 表单字段 -->
-</form>
-```
-
-### 2. 输入验证
-
-```php
-class Product extends BaseModel
-{
-    #[TableField(isFillable: true)]
-    #[Validate('required|string|max:255')]
-    protected string $name;
-
-    #[TableField(isFillable: true)]
-    #[Validate('required|numeric|min:0')]
-    protected float $price;
-
-    #[TableField(isFillable: true)]
-    #[Validate('email|unique:users,email')]
-    protected string $email;
-}
-```
-
-## 🌐 API 开发示例
-
-### RESTful API 示例
-
-```php
-<?php
-namespace App\Controller\Api;
-
-use App\Controller\BaseController;
-use App\Models\User;
-use Kernel\Attribute\Http\{Get, Post, Put, Delete};
-use Kernel\Attribute\Http\RequestBody;
-use Kernel\Attribute\Http\PathVariable;
-use Kernel\Attribute\Middleware\Middleware;
-
-#[RoutePrefix('/api/users')]
-#[Middleware('api.auth')]
-class UserController extends BaseController
-{
-    #[Get('/')]
-    public function index(): array
-    {
-        return User::with(['posts', 'profile'])->paginate(15);
-    }
-
-    #[Get('/{id}')]
-    public function show(#[PathVariable('id')] int $id): array
-    {
-        $user = User::with(['posts', 'profile'])->find($id);
-        if (!$user) {
-            return JsonResponse::error('User not found', 404);
-        }
-        return $user;
-    }
-
-    #[Post('/')]
-    #[Middleware('admin')]
-    public function store(#[RequestBody] UserCreateRequest $request): array
-    {
-        $user = User::create($request->validated());
-        return JsonResponse::success($user, 201);
-    }
-
-    #[Put('/{id}')]
-    public function update(
-        #[PathVariable('id')] int $id,
-        #[RequestBody] UserUpdateRequest $request
-    ): array {
-        $user = User::findOrFail($id);
-        $user->update($request->validated());
-        return $user;
-    }
-
-    #[Delete('/{id}')]
-    #[Middleware('admin')]
-    public function destroy(#[PathVariable('id')] int $id): JsonResponse
-    {
-        $user = User::findOrFail($id);
-        $user->delete();
-        return JsonResponse::success(null, 204);
-    }
-}
-```
-
-## 🛠 开发工具
-
-### 1. IDE 辅助
+### IDE 辅助
 
 ```bash
 # 为模型生成 IDE 代码补全文件
@@ -591,40 +359,9 @@ php jnm ide-helper:models
 ./listenDir-darwin-arm64 -dir "app/Models" -cmd "php jnm ide-helper:models"
 ```
 
-### 2. 调试工具
-
-```php
-// 启用调试模式 (.env)
-APP_DEBUG=true
-
-// 在代码中调试
-error_log('Debug message: ' . json_encode($data));
-
-// 查看应用日志
-tail -f logs/app-2024-01-01.log
-```
-
-### 3. 文件监听工具
-
-`listenDir` 是一个 Go 编写的文件监听工具，支持实时响应文件变化：
-
-```bash
-# 选择对应系统版本：
-# listenDir-darwin-amd64  - macOS Intel
-# listenDir-darwin-arm64  - macOS Apple Silicon
-# listenDir-linux-amd64   - Linux
-# listenDir-windows-amd64.exe - Windows
-
-# 监听模型文件变化并自动生成 IDE 辅助
-./listenDir-darwin-arm64 -dir "app/Models" -cmd "php jnm ide-helper:models"
-
-# 监听视图变化并清除缓存
-./listenDir-darwin-arm64 -dir "app/View" -cmd "rm -rf cache/views/*"
-```
-
 ## 🏗 部署指南
 
-### 1. Web 服务器配置
+### Web 服务器配置
 
 #### Nginx 配置
 ```nginx
@@ -638,7 +375,7 @@ tail -f logs/app-2024-01-01.log
 # 项目已包含 .htaccess 文件
 ```
 
-### 2. 生产环境配置
+### 生产环境配置
 
 ```bash
 # 1. 关闭调试模式
@@ -656,6 +393,96 @@ chmod -R 755 logs/
 chmod -R 755 cache/
 ```
 
+## 🌟 快速上手示例
+
+### 创建 RESTful API
+
+```php
+<?php
+namespace App\Controller\Api;
+
+use Kernel\Attribute\Http\{Get, Post, Put, Delete};
+use Kernel\Attribute\Http\PathVariable;
+use Kernel\Attribute\Http\RequestBody;
+use Kernel\Attribute\Middleware\Middleware;
+
+#[RoutePrefix('/api/users')]
+#[Middleware('auth')]
+class UserController extends BaseController
+{
+    #[Get('/')]
+    public function index(): array
+    {
+        return User::paginate(15);
+    }
+
+    #[Get('/{id}')]
+    public function show(#[PathVariable('id')] int $id): array
+    {
+        return User::findOrFail($id);
+    }
+
+    #[Post('/')]
+    public function store(#[RequestBody] UserCreateRequest $request): array
+    {
+        return User::create($request->validated());
+    }
+
+    #[Put('/{id}')]
+    public function update(
+        #[PathVariable('id')] int $id,
+        #[RequestBody] UserUpdateRequest $request
+    ): array {
+        $user = User::findOrFail($id);
+        $user->update($request->validated());
+        return $user;
+    }
+
+    #[Delete('/{id}')]
+    public function destroy(#[PathVariable('id')] int $id): JsonResponse
+    {
+        User::findOrFail($id)->delete();
+        return JsonResponse::success(null, 204);
+    }
+}
+```
+
+### 创建数据模型
+
+```php
+<?php
+namespace App\Models;
+
+use Kernel\Attribute\Database\TableField;
+use Kernel\Attribute\Database\{HasMany, BelongsTo};
+use Kernel\Attribute\Validation\Validate;
+use Kernel\Database\BaseModel;
+
+class Post extends BaseModel
+{
+    #[TableField(isPrimaryKey: true, isFillable: false, isHidden: true)]
+    protected int $id;
+
+    #[TableField(isFillable: true)]
+    #[Validate('required|string|max:255')]
+    protected string $title;
+
+    #[TableField(isFillable: true)]
+    #[Validate('required|string')]
+    protected string $content;
+
+    #[TableField(isFillable: true)]
+    #[Validate('required|exists:users,id')]
+    protected int $authorId;
+
+    #[BelongsTo(related: User::class, foreignKey: 'authorId')]
+    protected User $author;
+
+    #[HasMany(related: Comment::class)]
+    protected array $comments;
+}
+```
+
 ## 🤝 贡献指南
 
 欢迎贡献代码！请遵循以下步骤：
@@ -665,13 +492,6 @@ chmod -R 755 cache/
 3. 提交更改 (`git commit -m 'Add amazing feature'`)
 4. 推送到分支 (`git push origin feature/amazing-feature`)
 5. 开启 Pull Request
-
-## 📚 详细文档
-
-- **[数据库模型关系注解文档](kernel/Attribute/Database/README.md)** - 详细的数据库关联关系注解使用指南
-- **[服务提供者配置](config/providers.md)** - 服务提供者配置说明
-- **[中间件开发指南](kernel/Middleware/README.md)** - 中间件开发和使用
-- **[事件系统文档](kernel/Events/README.md)** - 事件和订阅者系统
 
 ## 📄 许可证
 
