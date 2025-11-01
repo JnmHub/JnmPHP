@@ -14,4 +14,21 @@ return [
             'prefix'    => env('DB_PREFIX', ''),
         ],
     ],
+    'redis' => [
+        'client' => env('REDIS_CLIENT', 'predis'),
+        'default' => [
+            'host'     => env('REDIS_HOST', '127.0.0.1'),
+            'port'     => env('REDIS_PORT', 6379),
+            'password' => env('REDIS_PASSWORD', null),
+            'database' => env('REDIS_DB', 0),
+            'timeout'  => 1.0,
+        ],
+        'session' => [
+            'host'     => env('REDIS_HOST', '127.0.0.1'),
+            'port'     => env('REDIS_PORT', 6379),
+            'password' => env('REDIS_PASSWORD', null),
+            'database' => env('REDIS_SESSION_DB', 1), //  session 专用 DB
+            'timeout'  => 1.0,
+        ],
+    ],
 ];

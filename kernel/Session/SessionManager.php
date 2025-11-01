@@ -4,6 +4,8 @@ namespace Kernel\Session;
 use Illuminate\Contracts\Container\Container;
 use Kernel\Session\Drivers\NativeSessionDriver;
 use Kernel\Session\Drivers\DatabaseSessionDriver;
+use Kernel\Session\Drivers\RedisSessionDriver;
+
 //use Kernel\Session\Drivers\RedisSessionDriver;
 
 /**
@@ -30,13 +32,13 @@ class SessionManager
                     throw new \RuntimeException("DatabaseSessionDriver not found.");
                 }
                 break;
-//            case 'redis':
-//                if (class_exists(RedisSessionDriver::class)) {
-//                    $this->driver = new RedisSessionDriver($app);
-//                } else {
-//                    throw new \RuntimeException("RedisSessionDriver not found.");
-//                }
-//                break;
+            case 'redis':
+                if (class_exists(RedisSessionDriver::class)) {
+                    $this->driver = new RedisSessionDriver();
+                } else {
+                    throw new \RuntimeException("RedisSessionDriver not found.");
+                }
+                break;
 
             default:
                 $this->driver = new NativeSessionDriver();
