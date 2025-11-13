@@ -2,7 +2,7 @@
 
 namespace App\Providers;
 
-use Kernel\Config\ConfigRepository;
+
 use Kernel\Providers\ServiceProvider;
 use Kernel\Redis\RedisManager;
 use Kernel\Redis\Redis; // 引入我们下一步要创建的 Facade

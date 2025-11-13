@@ -21,6 +21,10 @@ class StartSessionMiddleware implements MiddlewareInterface
         $this->session->start();
 
         // 继续处理请求
-        return $next($request);
+        $r =  $next($request);
+
+        $this->session->save();
+
+        return $r;
     }
 }

@@ -354,4 +354,18 @@
     array (
     ),
   ),
+  25 => 
+  array (
+    'path' => '/dto_demo',
+    'preg_path' => '#^/dto_demo$#',
+    'methods' => 
+    array (
+      0 => 'POST',
+    ),
+    'controller' => 'App\\Controller\\IndexController',
+    'action' => 'dtoDemo',
+    'middlewares' => 
+    array (
+    ),
+  ),
 );

@@ -38,6 +38,8 @@ class RedisManager
      */
     public function connection(string $name = null): Client
     {
+        // 验证Redis扩展是否可用
+        RedisValidator::validateRedisExtension('RedisManager');
         $name = $name ?: 'default';
 
         // 1. 如果已缓存，直接返回
