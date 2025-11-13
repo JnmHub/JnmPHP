@@ -11,6 +11,7 @@ use Kernel\Session\SessionDriverInterface;
  */
 class NativeSessionDriver implements SessionDriverInterface
 {
+    const CSRF_KEY = '_token';
     protected bool $started = false;
     protected array $config = [];
 
@@ -25,32 +26,41 @@ class NativeSessionDriver implements SessionDriverInterface
      */
     public function start(): bool
     {
-        if ($this->started) {
-            return true;
-        }
+        if ($this->started) return true;
+        if (session_status() === PHP_SESSION_ACTIVE) return $this->started = true;
 
-        if (session_status() === PHP_SESSION_ACTIVE) {
-            return $this->started = true;
-        }
+        $lifetimeSec = (int)($this->config['lifetime'] ?? 120) * 60;
+        ini_set('session.gc_maxlifetime', (string)$lifetimeSec);
 
         $options = [
-            'lifetime' => $this->config['lifetime'] * 60,
-            'path'     => $this->config['path'],
-            'domain'   => $this->config['domain'],
-            'secure'   => $this->config['secure'],
-            'httponly' => $this->config['http_only'],
-            'samesite' => $this->config['same_site'] ?? 'Lax',
+            'lifetime' => $lifetimeSec,
+            'path'     => $this->config['path']       ?? '/',
+            'domain'   => $this->config['domain']     ?? '',
+            'secure'   => (bool)($this->config['secure']    ?? false),
+            'httponly' => (bool)($this->config['http_only'] ?? true),
+            'samesite' => $this->config['same_site']  ?? 'Lax',
         ];
-
-        session_name($this->config['cookie']);
-        session_set_cookie_params($options);
-
-        if (session_start()) {
-            return $this->started = true;
+        // 自动检测Https
+        $isHttps = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
+            || (isset($_SERVER['SERVER_PORT']) && (int)$_SERVER['SERVER_PORT'] === 443);
+        if (!isset($this->config['secure'])) {
+            $options['secure'] = $isHttps;
+        }
+        if (strcasecmp($options['samesite'], 'None') === 0) {
+            $options['secure'] = true;
         }
 
-        return false;
+        session_name($this->config['cookie']);
+
+        ini_set('session.use_strict_mode', '1');
+        ini_set('session.use_only_cookies', '1');
+
+        // PHP 8.1+ 允许关联数组解包，这里没问题
+        session_set_cookie_params([...$options]);
+
+        return $this->started = (bool)session_start();
     }
+
 
     /**
      * 获取当前 Session ID
@@ -76,7 +86,19 @@ class NativeSessionDriver implements SessionDriverInterface
     public function all(): array
     {
         $this->start();
-        return $_SESSION ?? [];
+
+        // 必须先获取所有 key，因为 get() 可能会在遍历时删除元素
+        $keys = array_keys($_SESSION ?? []);
+        $data = [];
+
+        $sentinel = new \stdClass();
+        foreach ($keys as $key) {
+            $value = $this->get($key, $sentinel);
+            if ($value !== $sentinel) {
+                $data[$key] = $value;
+            }
+        }
+        return $data;
     }
 
     /**
@@ -85,22 +107,27 @@ class NativeSessionDriver implements SessionDriverInterface
     public function has(string $key): bool
     {
         $this->start();
-        return isset($_SESSION[$key]);
+        if (!isset($_SESSION[$key])) return false;
+        if (!is_array($_SESSION[$key])) return true; // 标量视为存在
+        if (isset($_SESSION[$key]['expires_at']) && $_SESSION[$key]['expires_at'] < time()) {
+            unset($_SESSION[$key]); return false;
+        }
+        return true;
     }
 
     /**
      * 获取 Session 值
      */
-    public function get(string $key, mixed $default = null): mixed
+    public function get(string $key, mixed $default = ""): mixed
     {
         $this->start();
 
+        if (!isset($_SESSION[$key])) return $default;
+        if (!is_array($_SESSION[$key])) return $_SESSION[$key];
         if (isset($_SESSION[$key]['expires_at']) && $_SESSION[$key]['expires_at'] < time()) {
-            unset($_SESSION[$key]);
-            return $default;
+            unset($_SESSION[$key]); return $default;
         }
-
-        return $_SESSION[$key] ?? $default;
+        return array_key_exists('value', $_SESSION[$key]) ? $_SESSION[$key]['value'] : $default;
     }
 
     /**
@@ -174,10 +201,10 @@ class NativeSessionDriver implements SessionDriverInterface
     public function token(): string
     {
         $this->start();
-        if (!$this->has('_token')) {
+        if (!$this->has(self::CSRF_KEY)) {
             $this->regenerateToken();
         }
-        return $this->get('_token');
+        return $this->get(self::CSRF_KEY,"");
     }
 
     /**
@@ -187,7 +214,7 @@ class NativeSessionDriver implements SessionDriverInterface
     {
         $this->start();
         $token = bin2hex(random_bytes(32));
-        $this->set('_token', $token);
+        $this->set(self::CSRF_KEY, $token);
         return $token;
     }
 
@@ -225,9 +252,22 @@ class NativeSessionDriver implements SessionDriverInterface
     public function expire(string $key, int $ttl): void
     {
         $this->start();
-
-        if (isset($_SESSION[$key])) {
-            $_SESSION[$key]['expires_at'] = time() + $ttl;
+        if (!isset($_SESSION[$key])) {
+            return;
         }
+        // 就在这里定义：
+        $exp = time() + $ttl;
+        if (is_array($_SESSION[$key])) {
+            $_SESSION[$key]['expires_at'] = $exp;
+            if (!array_key_exists('value', $_SESSION[$key])) {
+                $_SESSION[$key]['value'] = '';
+            }
+            return;
+        }
+        // 标量 -> 结构化
+        $_SESSION[$key] = [
+            'value'      => $_SESSION[$key],
+            'expires_at' => $exp,
+        ];
     }
 }
