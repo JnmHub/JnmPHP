@@ -16,9 +16,12 @@ kernel/Attribute/
 │   ├── MorphTo.php                 # 多态归属关系属性
 │   └── TableField.php              # 数据库字段属性
 ├── Http/                           # HTTP 相关属性
+│   ├── Delete.php                  # DELETE 路由属性
 │   ├── Get.php                     # GET 路由属性
-│   ├── Post.php                    # POST 路由属性
+│   ├── Patch.php                   # PATCH 路由属性
 │   ├── PathVariable.php            # 路径变量属性
+│   ├── Post.php                    # POST 路由属性
+│   ├── Put.php                     # PUT 路由属性
 │   ├── RequestBody.php             # 请求体绑定属性
 │   ├── Route.php                   # 基础路由属性
 │   └── RoutePrefix.php             # 路由前缀属性
@@ -61,7 +64,10 @@ class RoutePrefix
 ```
 Route (基础路由)
 ├── Get (GET 路由)
-└── Post (POST 路由)
+├── Post (POST 路由)
+├── Put (PUT 路由)
+├── Patch (PATCH 路由)
+└── Delete (DELETE 路由)
 ```
 
 ## 属性分类详解
@@ -240,6 +246,36 @@ public function createUser()
 }
 ```
 
+#### Put - PUT 路由
+
+```php
+#[Put('/users/{id}')]
+public function updateUser($id)
+{
+    // PUT /users/{id} - 完整更新资源
+}
+```
+
+#### Patch - PATCH 路由
+
+```php
+#[Patch('/users/{id}')]
+public function partialUpdateUser($id)
+{
+    // PATCH /users/{id} - 部分更新资源
+}
+```
+
+#### Delete - DELETE 路由
+
+```php
+#[Delete('/users/{id}')]
+public function deleteUser($id)
+{
+    // DELETE /users/{id} - 删除资源
+}
+```
+
 #### RoutePrefix - 路由前缀
 
 ```php
@@ -396,7 +432,7 @@ class Product extends BaseModel
 | `TableField` | 类属性 | `#[TableField] protected $name;` |
 | `Validate` | 类属性 | `#[Validate('required')] protected $email;` |
 | `RoutePrefix` | 类 | `#[RoutePrefix('/api')] class Controller` |
-| `Get/Post` | 方法 | `#[Get('/users')] public function index()` |
+| `Get/Post/Put/Patch/Delete` | 方法 | `#[Get('/users')] public function index()` |
 | `Middleware` | 类/方法 | `#[Middleware('auth')] public function profile()` |
 | `PathVariable` | 参数 | `public function show(#[PathVariable('id')] int $id)` |
 | `RequestBody` | 参数 | `public function store(#[RequestBody] User $user)` |
@@ -432,6 +468,30 @@ class UserController extends BaseController
     {
         // GET /api/v1/users/{id}
         // 自动转换路径参数类型
+    }
+
+    #[Put('/users/{id}')]
+    #[Middleware('auth')]
+    public function update(#[PathVariable('id')] int $id, #[RequestBody] User $user)
+    {
+        // PUT /api/v1/users/{id}
+        // 完整更新用户信息
+    }
+
+    #[Patch('/users/{id}')]
+    #[Middleware('auth')]
+    public function partialUpdate(#[PathVariable('id')] int $id, #[RequestBody] array $data)
+    {
+        // PATCH /api/v1/users/{id}
+        // 部分更新用户信息
+    }
+
+    #[Delete('/users/{id}')]
+    #[Middleware('auth')]
+    public function destroy(#[PathVariable('id')] int $id)
+    {
+        // DELETE /api/v1/users/{id}
+        // 删除用户
     }
 }
 ```
