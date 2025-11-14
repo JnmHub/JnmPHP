@@ -8,7 +8,7 @@ Session 命名空间为 JnmPHP 框架提供了完整的会话管理功能。它�
 
 ## 核心功能
 
-- **多驱动支持**：支持原生 PHP Session 和数据库存储
+- **多驱动支持**：支持原生 PHP Session、数据库存储和 Redis 存储
 - **统一接口**：所有驱动实现相同的 `SessionDriverInterface` 接口
 - **CSRF 保护**：内置 CSRF Token 生成和验证机制
 - **会话过期**：支持全局和单个键的过期时间设置
@@ -16,6 +16,7 @@ Session 命名空间为 JnmPHP 框架提供了完整的会话管理功能。它�
 - **自动管理**：自动启动会话和清理过期数据
 - **跨数据库兼容**：数据库驱动支持多种数据库类型
 - **调试支持**：开发环境下的表结构自动检查和创建
+- **滑动过期**：Redis 驱动支持读取时自动续期
 
 ## 核心组件
 
@@ -39,7 +40,7 @@ public function __construct(Container $app)
 
 - **native**：使用 PHP 内建 Session 机制（默认）
 - **database**：使用数据库存储会话数据
-- **redis**：预留接口（待实现）
+- **redis**：使用 Redis 存储会话数据（高性能，适合分布式环境）
 
 ### SessionDriverInterface.php
 
@@ -118,8 +119,44 @@ CREATE TABLE `sessions` (
     `user_id`       INTEGER NULL,
     `payload`       LONGTEXT,           -- JSON 格式的会话数据
     `last_activity` INTEGER,            -- 最后活动时间
-    `expires_at`    TIMESTAMP NULL      -- 过期时间
+    `expires_at`    INTEGER NULL        -- 过期时间（Unix 时间戳）
 );
+```
+
+### RedisSessionDriver.php
+
+Redis 会话驱动，使用 Redis 存储会话数据，适合高并发和分布式环境。
+
+#### 特性
+
+- **高性能**：基于内存的存储，读写速度极快
+- **分布式支持**：支持多服务器共享会话数据
+- **滑动过期**：支持读取时自动续期
+- **数据结构**：使用 Redis Hash 存储会话数据
+- **自动清理**：利用 Redis 的 TTL 机制自动清理过期数据
+- **JSON 编码**：使用 JSON 格式序列化复杂数据
+
+#### 配置选项
+
+```php
+'redis' => [
+    'connection' => env('REDIS_CONNECTION', 'default'),  // Redis 连接名称
+    'prefix' => env('SESSION_REDIS_PREFIX', 'session:'), // 键前缀
+    'lifetime' => env('SESSION_REDIS_LIFETIME', 1200),   // 生命周期（秒）
+],
+```
+
+#### Redis 数据结构
+
+```
+Key: session:{session_id}
+Type: Hash
+Fields:
+    - user_id: "123"
+    - name: "John Doe"
+    - _token: "abc123..."
+    - temp_data: "{\"value\":\"data\",\"expires_at\":1640995200}"
+TTL: 设置为会话生命周期
 ```
 
 ## 使用示例
@@ -277,24 +314,31 @@ class CsrfMiddleware implements MiddlewareInterface
 ```php
 // config/session.php
 return [
-    // 驱动类型：native, database
-    'driver' => 'native',
+    // 驱动类型：native, database, redis
+    'driver' => env('SESSION_DRIVER', 'native'),
 
     // 会话生命周期（分钟）
-    'lifetime' => 120,
+    'lifetime' => env('SESSION_LIFETIME', 1440),
 
     // Cookie 配置
-    'cookie' => 'jnm_session',
+    'cookie' => env('SESSION_COOKIE', 'jnm_session'),
     'path' => '/',
-    'domain' => null,
-    'secure' => false,
+    'domain' => env('SESSION_DOMAIN', null),
+    'secure' => env('SESSION_SECURE_COOKIE', false),
     'http_only' => true,
     'same_site' => 'Lax',
 
     // 数据库配置
     'database' => [
+        'connection' => env('DB_CONNECTION', 'default'),
         'table' => 'sessions',
-        'connection' => null,
+    ],
+
+    // Redis 配置
+    'redis' => [
+        'connection' => env('REDIS_CONNECTION', 'default'),
+        'prefix' => env('SESSION_REDIS_PREFIX', 'session:'),
+        'lifetime' => env('SESSION_REDIS_LIFETIME', 1200),
     ],
 ];
 ```
@@ -304,7 +348,7 @@ return [
 ```env
 # .env 文件
 SESSION_DRIVER=native
-SESSION_LIFETIME=120
+SESSION_LIFETIME=1440
 SESSION_COOKIE=jnm_session
 SESSION_SECURE=false
 SESSION_HTTP_ONLY=true
@@ -316,6 +360,17 @@ DB_HOST=127.0.0.1
 DB_DATABASE=jnmphp
 DB_USERNAME=root
 DB_PASSWORD=
+
+# Redis 配置
+REDIS_CONNECTION=default
+REDIS_HOST=127.0.0.1
+REDIS_PORT=6379
+REDIS_PASSWORD=
+REDIS_DB=0
+
+# Redis Session 配置
+SESSION_REDIS_PREFIX=session:
+SESSION_REDIS_LIFETIME=1200
 ```
 
 ## 驱动切换
@@ -335,6 +390,24 @@ DB_PASSWORD=
 
 // 3. 运行迁移（如果需要）
 // 框架会在 DEBUG 模式下自动创建表
+```
+
+### 切换到 Redis 驱动
+
+```php
+// 1. 修改环境变量
+// .env 文件
+SESSION_DRIVER=redis
+
+// 2. 配置 Redis 连接
+// config/session.php
+'redis' => [
+    'connection' => 'default',  // 对应 config/redis.php 中的连接
+    'prefix' => 'session:',     // Redis 键前缀
+    'lifetime' => 1200,         // Redis 生命周期（秒）
+],
+
+// 3. 确保 Redis 服务运行并可连接
 ```
 
 ### 自定义驱动

@@ -11,6 +11,7 @@ app/Providers/
 ├── DatabaseServiceProvider.php    # 数据库服务提供者
 ├── EventServiceProvider.php       # 事件服务提供者
 ├── LogServiceProvider.php         # 日志服务提供者
+├── RedisServiceProvider.php       # Redis 服务提供者
 ├── RouteServiceProvider.php       # 路由服务提供者
 ├── SessionServiceProvider.php     # 会话服务提供者
 ├── ViewServiceProvider.php        # 视图服务提供者
@@ -57,9 +58,10 @@ return [
     LogServiceProvider::class,         // 3. 日志服务
     EventServiceProvider::class,       // 4. 事件系统
     DatabaseServiceProvider::class,    // 5. 数据库连接
-    RouteServiceProvider::class,       // 6. 路由系统
-    ViewServiceProvider::class,        // 7. 视图引擎
-    SessionServiceProvider::class,     // 8. 会话管理
+    RedisServiceProvider::class,       // 6. Redis 服务
+    RouteServiceProvider::class,       // 7. 路由系统
+    ViewServiceProvider::class,        // 8. 视图引擎
+    SessionServiceProvider::class,     // 9. 会话管理
 ];
 ```
 
@@ -409,7 +411,85 @@ app/View/
 
 ---
 
-### 8. SessionServiceProvider - 会话服务
+### 8. RedisServiceProvider - Redis 服务
+
+**功能：** 提供 Redis 连接管理和缓存服务
+
+#### 服务绑定
+- `RedisManager` - Redis 管理器（单例）
+- `redis` - Redis 管理器别名
+
+#### 实现细节
+```php
+public function register(): void
+{
+    $this->container->singleton(RedisManager::class, function ($container) {
+        // 从配置仓库获取 redis 配置
+        $config = config('database.redis');
+        if (empty($config)) {
+            throw new \RuntimeException("Redis 配置 (config/database.php) 未找到。");
+        }
+
+        return new RedisManager($config);
+    });
+
+    // 添加别名，方便通过 app('redis') 访问
+    $this->container->alias(RedisManager::class, 'redis');
+}
+
+public function boot(): void
+{
+    // 将容器中的单例 Manager 注入到 Redis Facade 中
+    Redis::setManager($this->container->make(RedisManager::class));
+}
+```
+
+#### Redis 特性
+- **连接管理：** 支持多个 Redis 连接配置
+- **Facade 支持：** 提供 Redis Facade 便于静态调用
+- **配置驱动：** 通过数据库配置文件管理 Redis 连接
+- **依赖注入：** 完全支持依赖注入和容器管理
+
+#### 配置示例 (`config/database.php`)
+```php
+return [
+    'default' => 'mysql',
+    'redis' => [
+        'client' => 'phpredis',
+        'default' => [
+            'host' => env('REDIS_HOST', '127.0.0.1'),
+            'port' => env('REDIS_PORT', '6379'),
+            'password' => env('REDIS_PASSWORD', null),
+            'database' => env('REDIS_DB', '0'),
+        ],
+        'cache' => [
+            'host' => env('REDIS_CACHE_HOST', '127.0.0.1'),
+            'port' => env('REDIS_CACHE_PORT', '6379'),
+            'password' => env('REDIS_CACHE_PASSWORD', null),
+            'database' => env('REDIS_CACHE_DB', '1'),
+        ],
+    ],
+];
+```
+
+#### 使用示例
+```php
+// 通过容器获取
+$redis = app('redis');
+$redis->set('key', 'value');
+
+// 通过 Facade 使用
+Redis::set('key', 'value');
+$value = Redis::get('key');
+
+// 连接特定服务器
+$cacheRedis = app('redis')->connection('cache');
+$cacheRedis->set('cache_key', 'cache_value');
+```
+
+---
+
+### 9. SessionServiceProvider - 会话服务
 
 **功能：** 提供会话管理服务
 
@@ -434,18 +514,28 @@ public function register(): void
 #### 会话驱动支持
 - **native** - PHP 原生 Session（默认）
 - **database** - 数据库驱动
-- **redis** - Redis 驱动（预留）
+- **redis** - Redis 驱动（已实现）
 
 #### 配置文件 (`config/session.php`)
 ```php
 return [
     'driver' => env('SESSION_DRIVER', 'native'),
-    'lifetime' => env('SESSION_LIFETIME', 120),
+    'lifetime' => env('SESSION_LIFETIME', 1440),
     'path' => '/',
     'domain' => env('SESSION_DOMAIN', null),
-    'secure' => env('SESSION_SECURE', false),
+    'secure' => env('SESSION_SECURE_COOKIE', false),
     'http_only' => true,
-    'same_site' => 'lax',
+    'same_site' => 'Lax',
+    'cookie' => env('SESSION_COOKIE', 'jnm_session'),
+    'database' => [
+        'table' => 'sessions',
+        'connection' => null,
+    ],
+    'redis' => [
+        'connection' => env('REDIS_CONNECTION', 'default'),
+        'prefix' => env('SESSION_REDIS_PREFIX', 'session:'),
+        'lifetime' => env('SESSION_REDIS_LIFETIME', 1200),
+    ],
 ];
 ```
 
